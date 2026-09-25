@@ -1,0 +1,41 @@
+{
+  "country": {
+    "recall_pct": 100.0,
+    "avg_candidates_per_s1": 5352452.1,
+    "median_candidates_per_s1": 6186873.0,
+    "max_candidates_per_s1": 6186873,
+    "reduction_ratio_pct": 48.1363,
+    "true_matches_evaluated": null,
+    "note": "analytical: recall assumed 100% (matches always share country); candidate count = size of that S1 entity's own-country pool"
+  },
+  "country_norm_name": {
+    "recall_pct": 42.903,
+    "avg_candidates_per_s1": 37.6,
+    "median_candidates_per_s1": 3.0,
+    "max_candidates_per_s1": 1423,
+    "reduction_ratio_pct": 99.9996,
+    "true_matches_evaluated": 76125
+  },
+  "country_name_prefix4": {
+    "recall_pct": 79.162,
+    "avg_candidates_per_s1": 7169.4,
+    "median_candidates_per_s1": 2973.0,
+    "max_candidates_per_s1": 64426,
+    "reduction_ratio_pct": 99.9305,
+    "true_matches_evaluated": 76125
+  },
+  "country_pin": {
+    "recall_pct": 4.716,
+    "avg_candidates_per_s1": 3.1,
+    "median_candidates_per_s1": 0.0,
+    "max_candidates_per_s1": 281,
+    "reduction_ratio_pct": 100.0,
+    "true_matches_evaluated": 76125
+  },
+  "_meta": {
+    "sample_frac": 0.01,
+    "s1_sample_size": 20835,
+    "candidate_pool_size": 10320219,
+    "seconds": 282.1
+  }
+}

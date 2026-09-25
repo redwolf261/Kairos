@@ -1,0 +1,31 @@
+{
+  "total_s1_entities": 2206821,
+  "singleton_count": 123247,
+  "singleton_pct": 5.585,
+  "matches_per_s1": {
+    "mean": 3.461,
+    "median": 3,
+    "max": 11,
+    "p95": 6
+  },
+  "match_count_distribution": {
+    "0": 123247,
+    "1": 119157,
+    "2": 375212,
+    "3": 530841,
+    "4": 484115,
+    "5": 321957,
+    "6": 164868,
+    "7": 63968,
+    "8": 18680,
+    "9": 4205,
+    "10": 534,
+    "11": 37
+  },
+  "s2_only_pct": 6.481,
+  "s3_only_pct": 7.454,
+  "both_s2_and_s3_pct": 80.48,
+  "no_match_pct": 5.585,
+  "total_s2_match_links": 3693619,
+  "total_s3_match_links": 3944746
+}

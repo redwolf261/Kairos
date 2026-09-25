@@ -1,0 +1,78 @@
+{
+  "S1_vs_source2": {
+    "exact_raw_name": {
+      "s1_unique_values": 1539229,
+      "train_source2_unique_values": 4402009,
+      "overlap_count": 168382,
+      "overlap_pct_of_s1": 10.939
+    },
+    "exact_norm_name": {
+      "s1_unique_values": 1324484,
+      "train_source2_unique_values": 3211784,
+      "overlap_count": 858610,
+      "overlap_pct_of_s1": 64.826
+    },
+    "exact_norm_address": {
+      "s1_unique_values": 2130148,
+      "train_source2_unique_values": 4281388,
+      "overlap_count": 354182,
+      "overlap_pct_of_s1": 16.627
+    },
+    "name_country": {
+      "s1_unique_values": 1327301,
+      "train_source2_unique_values": 3220708,
+      "overlap_count": 860142,
+      "overlap_pct_of_s1": 64.804
+    },
+    "address_country": {
+      "s1_unique_values": 2130148,
+      "train_source2_unique_values": 4281389,
+      "overlap_count": 354182,
+      "overlap_pct_of_s1": 16.627
+    },
+    "name_address": {
+      "s1_unique_values": 2206818,
+      "train_source2_unique_values": 4874107,
+      "overlap_count": 176997,
+      "overlap_pct_of_s1": 8.02
+    }
+  },
+  "S1_vs_source3": {
+    "exact_raw_name": {
+      "s1_unique_values": 1539229,
+      "train_source3_unique_values": 4651609,
+      "overlap_count": 176687,
+      "overlap_pct_of_s1": 11.479
+    },
+    "exact_norm_name": {
+      "s1_unique_values": 1324484,
+      "train_source3_unique_values": 3508807,
+      "overlap_count": 860461,
+      "overlap_pct_of_s1": 64.966
+    },
+    "exact_norm_address": {
+      "s1_unique_values": 2130148,
+      "train_source3_unique_values": 4614590,
+      "overlap_count": 171440,
+      "overlap_pct_of_s1": 8.048
+    },
+    "name_country": {
+      "s1_unique_values": 1327301,
+      "train_source3_unique_values": 3520584,
+      "overlap_count": 861977,
+      "overlap_pct_of_s1": 64.942
+    },
+    "address_country": {
+      "s1_unique_values": 2130148,
+      "train_source3_unique_values": 4614591,
+      "overlap_count": 171440,
+      "overlap_pct_of_s1": 8.048
+    },
+    "name_address": {
+      "s1_unique_values": 2206818,
+      "train_source3_unique_values": 5168654,
+      "overlap_count": 5083,
+      "overlap_pct_of_s1": 0.23
+    }
+  }
+}

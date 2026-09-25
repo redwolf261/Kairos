@@ -1,0 +1,32 @@
+# === Dataset (large, provided separately by the challenge) ===
+student_resource/dataset/
+
+# === Local caches (regenerable from the dataset, large) ===
+student_resource/audit/cache/
+audit/cache/
+
+# === Transient run logs from local experimentation ===
+student_resource/*.log
+*.log
+
+# === Python ===
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.ipynb_checkpoints/
+
+# === macOS zip artifacts ===
+__MACOSX/
+.DS_Store
+
+# === OS / editor ===
+Thumbs.db
+.vscode/
+.idea/
+
+# === Claude Code session/runtime state (not project content) ===
+.claude/
+
+# === Empty stray directory from an early misrun (kept out just in case it repopulates) ===
+/audit/

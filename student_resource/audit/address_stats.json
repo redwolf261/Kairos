@@ -1,0 +1,104 @@
+{
+  "train_source1": {
+    "sampled_rows": 281821,
+    "length_chars": {
+      "mean": 52.04,
+      "median": 41.0,
+      "p95": 103.0,
+      "max": 230
+    },
+    "token_count": {
+      "mean": 8.51,
+      "median": 7.0
+    },
+    "empty_address_pct": 0.0,
+    "pin_or_zip_extraction_rate_pct": 6.669,
+    "digit_char_share_pct": 7.767,
+    "normalized_duplicate_rate_pct_of_sample": 0.78
+  },
+  "train_source2": {
+    "sampled_rows": 500000,
+    "length_chars": {
+      "mean": 46.25,
+      "median": 37.0,
+      "p95": 96.0,
+      "max": 231
+    },
+    "token_count": {
+      "mean": 7.7,
+      "median": 6.0
+    },
+    "empty_address_pct": 3.341,
+    "pin_or_zip_extraction_rate_pct": 7.386,
+    "digit_char_share_pct": 8.398,
+    "normalized_duplicate_rate_pct_of_sample": 4.811
+  },
+  "train_source3": {
+    "sampled_rows": 500000,
+    "length_chars": {
+      "mean": 46.7,
+      "median": 42.0,
+      "p95": 91.0,
+      "max": 217
+    },
+    "token_count": {
+      "mean": 7.54,
+      "median": 6.0
+    },
+    "empty_address_pct": 3.335,
+    "pin_or_zip_extraction_rate_pct": 7.308,
+    "digit_char_share_pct": 8.344,
+    "normalized_duplicate_rate_pct_of_sample": 4.508
+  },
+  "test_source1": {
+    "sampled_rows": 225000,
+    "length_chars": {
+      "mean": 57.27,
+      "median": 51.0,
+      "p95": 105.0,
+      "max": 235
+    },
+    "token_count": {
+      "mean": 9.41,
+      "median": 9.0
+    },
+    "empty_address_pct": 0.0,
+    "pin_or_zip_extraction_rate_pct": 4.424,
+    "digit_char_share_pct": 6.442,
+    "normalized_duplicate_rate_pct_of_sample": 0.779
+  },
+  "test_source2": {
+    "sampled_rows": 500000,
+    "length_chars": {
+      "mean": 50.42,
+      "median": 43.0,
+      "p95": 99.0,
+      "max": 225
+    },
+    "token_count": {
+      "mean": 8.4,
+      "median": 7.0
+    },
+    "empty_address_pct": 2.614,
+    "pin_or_zip_extraction_rate_pct": 5.094,
+    "digit_char_share_pct": 7.371,
+    "normalized_duplicate_rate_pct_of_sample": 4.165
+  },
+  "test_source3": {
+    "sampled_rows": 500000,
+    "length_chars": {
+      "mean": 48.82,
+      "median": 43.0,
+      "p95": 94.0,
+      "max": 232
+    },
+    "token_count": {
+      "mean": 8.1,
+      "median": 7.0
+    },
+    "empty_address_pct": 2.703,
+    "pin_or_zip_extraction_rate_pct": 5.069,
+    "digit_char_share_pct": 7.477,
+    "normalized_duplicate_rate_pct_of_sample": 4.033
+  }
+}

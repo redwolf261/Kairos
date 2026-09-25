@@ -1,0 +1,134 @@
+{
+  "train_source1": {
+    "rows": 2206821,
+    "file_size_mb": 200.3,
+    "seconds_to_scan": 4.2,
+    "columns": [
+      "entity_id",
+      "business_name",
+      "business_address",
+      "country"
+    ],
+    "missing_pct": {
+      "business_name": 0.0,
+      "business_address": 0.0,
+      "country": 0.0
+    },
+    "country_distribution": {
+      "US": 1323633,
+      "India": 883188
+    }
+  },
+  "train_source2": {
+    "rows": 5034616,
+    "file_size_mb": 466.6,
+    "seconds_to_scan": 9.1,
+    "columns": [
+      "entity_id",
+      "business_name",
+      "business_address",
+      "country"
+    ],
+    "missing_pct": {
+      "business_name": 0.0,
+      "business_address": 3.356,
+      "country": 0.0
+    },
+    "country_distribution": {
+      "US": 3016817,
+      "India": 2017799
+    }
+  },
+  "train_source3": {
+    "rows": 5285603,
+    "file_size_mb": 480.4,
+    "seconds_to_scan": 9.3,
+    "columns": [
+      "entity_id",
+      "business_name",
+      "business_address",
+      "country"
+    ],
+    "missing_pct": {
+      "business_name": 0.0,
+      "business_address": 3.328,
+      "country": 0.0
+    },
+    "country_distribution": {
+      "US": 3170056,
+      "India": 2115547
+    }
+  },
+  "train_ground_truth": {
+    "rows": 2206821,
+    "file_size_mb": 121.1,
+    "seconds_to_scan": 3.0,
+    "columns": [
+      "source1_entity_id",
+      "matched_entity_ids"
+    ]
+  },
+  "test_source1": {
+    "rows": 1732544,
+    "file_size_mb": 166.9,
+    "seconds_to_scan": 3.5,
+    "columns": [
+      "entity_id",
+      "business_name",
+      "business_address",
+      "country"
+    ],
+    "missing_pct": {
+      "business_name": 0.0,
+      "business_address": 0.0,
+      "country": 0.0
+    },
+    "country_distribution": {
+      "India": 809986,
+      "US": 663106,
+      "France": 259452
+    }
+  },
+  "test_source2": {
+    "rows": 4887273,
+    "file_size_mb": 485.9,
+    "seconds_to_scan": 9.4,
+    "columns": [
+      "entity_id",
+      "business_name",
+      "business_address",
+      "country"
+    ],
+    "missing_pct": {
+      "business_name": 0.0,
+      "business_address": 2.648,
+      "country": 0.0
+    },
+    "country_distribution": {
+      "India": 2312565,
+      "US": 1871330,
+      "France": 703378
+    }
+  },
+  "test_source3": {
+    "rows": 5082316,
+    "file_size_mb": 482.6,
+    "seconds_to_scan": 9.3,
+    "columns": [
+      "entity_id",
+      "business_name",
+      "business_address",
+      "country"
+    ],
+    "missing_pct": {
+      "business_name": 0.0,
+      "business_address": 2.678,
+      "country": 0.0
+    },
+    "country_distribution": {
+      "India": 2405000,
+      "US": 1945701,
+      "France": 731615
+    }
+  }
+}

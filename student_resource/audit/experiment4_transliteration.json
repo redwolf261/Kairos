@@ -1,0 +1,105 @@
+{
+  "india_true_matches": 61467,
+  "india_true_matches_with_unequal_norm_names": 37392,
+  "unequal_pct_of_india": 60.83,
+  "script_pair_distribution": {
+    "latin_vs_latin": 26578,
+    "latin_vs_devanagari": 5851,
+    "latin_vs_other": 4480,
+    "latin_vs_mixed": 483
+  },
+  "cross_script_latin_devanagari_count": 5851,
+  "cross_script_pct_of_unequal": 15.65,
+  "examples_cross_script": [
+    {
+      "s1_name": "Golden Services Private Limited",
+      "s2_name": "गोल्डन सर्विसेज प्राइवेट लिमिटेड",
+      "s1_script": "latin",
+      "s2_script": "devanagari"
+    },
+    {
+      "s1_name": "One Products Pvt Ltd",
+      "s2_name": "वन प्रोडक्ट्स प्रा. लि.",
+      "s1_script": "latin",
+      "s2_script": "devanagari"
+    },
+    {
+      "s1_name": "Laxmi Estate Private Limited",
+      "s2_name": "लक्ष्मी एस्टेट प्राइवेट लिमिटेड",
+      "s1_script": "latin",
+      "s2_script": "devanagari"
+    },
+    {
+      "s1_name": "Best Finance Private Limited",
+      "s2_name": "बेस्ट फाइनेंस प्राइवेट लिमिटेड",
+      "s1_script": "latin",
+      "s2_script": "devanagari"
+    },
+    {
+      "s1_name": "Universal Infotech Private Limited",
+      "s2_name": "यूनिवर्सल इंफोटेक प्राइवेट लिमिटेड",
+      "s1_script": "latin",
+      "s2_script": "devanagari"
+    },
+    {
+      "s1_name": "Modern Consulting Pvt Ltd",
+      "s2_name": "मॉडर्न कंसल्टिंग प्रा. लि.",
+      "s1_script": "latin",
+      "s2_script": "devanagari"
+    },
+    {
+      "s1_name": "Prime Tech Pvt Ltd",
+      "s2_name": "प्राइम टेक प्रा. लि.",
+      "s1_script": "latin",
+      "s2_script": "devanagari"
+    },
+    {
+      "s1_name": "Sun Developers Private Limited",
+      "s2_name": "सन डेवलपर्स प्राइवेट लिमिटेड",
+      "s1_script": "latin",
+      "s2_script": "devanagari"
+    },
+    {
+      "s1_name": "Lakshmi Software",
+      "s2_name": "लक्ष्मी सॉफ्टवेयर",
+      "s1_script": "latin",
+      "s2_script": "devanagari"
+    },
+    {
+      "s1_name": "Hotel Food Private Limited",
+      "s2_name": "होटल फूड प्राइवेट लिमिटेड",
+      "s1_script": "latin",
+      "s2_script": "devanagari"
+    },
+    {
+      "s1_name": "Tirupati Technology Private Limited",
+      "s2_name": "तिरुपति टेक्नोलॉजी प्राइवेट लिमिटेड",
+      "s1_script": "latin",
+      "s2_script": "devanagari"
+    },
+    {
+      "s1_name": "Shyam Care LLP",
+      "s2_name": "श्याम केयर एलएलपी",
+      "s1_script": "latin",
+      "s2_script": "devanagari"
+    },
+    {
+      "s1_name": "Prime Sree Engineering",
+      "s2_name": "प्राइम श्री इंजीनियरिंग",
+      "s1_script": "latin",
+      "s2_script": "devanagari"
+    },
+    {
+      "s1_name": "Jay Food Private Limited",
+      "s2_name": "जय फूड प्राइवेट लिमिटेड",
+      "s1_script": "latin",
+      "s2_script": "devanagari"
+    },
+    {
+      "s1_name": "Aditya Jain Builders Private Limited",
+      "s2_name": "आदित्य जैन बिल्डर्स प्राइवेट लिमिटेड",
+      "s1_script": "latin",
+      "s2_script": "devanagari"
+    }
+  ]
+}

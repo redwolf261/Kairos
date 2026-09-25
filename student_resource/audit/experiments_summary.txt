@@ -1,0 +1,220 @@
+==============================================================================
+EXPERIMENT 1 -- TRUE-MATCH SIMILARITY DISTRIBUTIONS
+==============================================================================
+n_pairs: 152,473
+  addr_char3_jaccard: mean=0.6399 median=0.6765
+      >=0.8: 29.21%
+      >=0.6: 63.12%
+      >=0.4: 83.95%
+      >=0.2: 93.18%
+  addr_edit_similarity: mean=0.638 median=0.7091
+      >=0.8: 35.33%
+      >=0.6: 63.99%
+      >=0.4: 78.01%
+  addr_exact_norm_equal_pct: 8.27
+  addr_exact_raw_equal_pct: 2.2
+  addr_prefix4_equal_pct: 51.95
+  addr_token_jaccard: mean=0.6053 median=0.6364
+      >=0.7: 39.87%
+      >=0.5: 68.34%
+      >=0.3: 87.25%
+  name_char3_jaccard: mean=0.6993 median=0.7692
+      >=0.9: 43.49%
+      >=0.8: 47.98%
+      >=0.6: 65.59%
+      >=0.4: 81.31%
+      >=0.2: 89.12%
+  name_char4_jaccard: mean=0.6687 median=0.7143
+      >=0.9: 43.14%
+      >=0.8: 45.85%
+      >=0.6: 59.7%
+      >=0.4: 76.11%
+      >=0.2: 87.31%
+  name_edit_similarity: mean=0.7687 median=0.9167
+      >=0.9: 51.28%
+      >=0.8: 59.02%
+      >=0.6: 77.28%
+      >=0.4: 87.57%
+  name_exact_norm_equal_pct: 42.78
+  name_exact_raw_equal_pct: 4.57
+  name_length_ratio: mean=0.8712 median=1.0
+      >=0.9: 64.55%
+      >=0.7: 81.0%
+      >=0.5: 93.13%
+  name_or_addr_char3_jaccard_ge_0.6_pct: 88.09
+  name_prefix4_equal_pct: 79.43
+  name_token_jaccard: mean=0.6594 median=0.6667
+      >=0.9: 46.11%
+      >=0.7: 49.72%
+      >=0.5: 71.94%
+      >=0.3: 83.39%
+  name_token_set_ratio: mean=0.8651 median=1.0
+      >=0.9: 73.56%
+      >=0.8: 81.17%
+      >=0.6: 87.59%
+      >=0.4: 91.05%
+
+==============================================================================
+EXPERIMENT 2 -- TRUE PAIRS vs FALSE PAIRS (BLOCKING CANDIDATES)
+==============================================================================
+true_pairs n=152,473   false_pairs n=202,642
+Histogram (TRUE% / FALSE% per bin):
+  name_char3_jaccard:
+      0.0-0.2: true=11.14%  false=65.96%
+      0.2-0.4: true=8.26%  false=26.36%
+      0.4-0.6: true=16.08%  false=3.95%
+      0.6-0.8: true=17.16%  false=1.16%
+      0.8-1.0: true=47.35%  false=2.58%
+  addr_char3_jaccard:
+      0.0-0.2: true=6.92%  false=98.09%
+      0.2-0.4: true=9.37%  false=1.1%
+      0.4-0.6: true=21.33%  false=0.33%
+      0.6-0.8: true=34.14%  false=0.35%
+      0.8-1.0: true=28.23%  false=0.12%
+  name_token_set_ratio:
+      0.0-0.2: true=7.6%  false=0.04%
+      0.2-0.4: true=1.46%  false=14.66%
+      0.4-0.6: true=3.52%  false=47.99%
+      0.6-0.8: true=6.94%  false=28.79%
+      0.8-1.0: true=80.49%  false=8.53%
+
+==============================================================================
+EXPERIMENT 3 -- WHY country+norm_name BLOCKING MISSES MATCHES
+==============================================================================
+caught_pct: 42.78%   missed_pct: 57.22%
+Missed-match categorization:
+  moderate_char_overlap_likely_abbrev_or_typo: 37,647 (43.15% of missed)
+  low_char_overlap: 19,128 (21.93% of missed)
+  name_completely_different_or_script_mismatch: 14,637 (16.78% of missed)
+  minor_token_diff_likely_suffix_or_typo: 10,749 (12.32% of missed)
+  word_order_only: 5,077 (5.82% of missed)
+  name_missing: 4 (0.0% of missed)
+-- CAUGHT group (means only) --
+  addr_char3_jaccard: mean=0.6318 median=0.6667
+      >=0.8: 27.29%
+      >=0.6: 62.42%
+      >=0.4: 83.81%
+      >=0.2: 92.83%
+  addr_edit_similarity: mean=0.6344 median=0.7073
+      >=0.8: 34.63%
+      >=0.6: 64.19%
+      >=0.4: 78.04%
+  addr_exact_norm_equal_pct: 6.9
+  addr_exact_raw_equal_pct: 0.71
+  addr_prefix4_equal_pct: 51.5
+  addr_token_jaccard: mean=0.5924 median=0.625
+      >=0.7: 37.75%
+      >=0.5: 67.29%
+      >=0.3: 86.7%
+  name_char3_jaccard: mean=0.9242 median=1.0
+      >=0.9: 85.83%
+      >=0.8: 86.94%
+      >=0.6: 91.33%
+      >=0.4: 95.24%
+      >=0.2: 97.23%
+  name_char4_jaccard: mean=0.9166 median=1.0
+      >=0.9: 85.74%
+      >=0.8: 86.42%
+      >=0.6: 89.9%
+      >=0.4: 93.92%
+      >=0.2: 96.8%
+  name_edit_similarity: mean=0.9414 median=1.0
+      >=0.9: 87.76%
+      >=0.8: 89.59%
+      >=0.6: 94.21%
+      >=0.4: 96.85%
+  name_exact_norm_equal_pct: 85.65
+  name_exact_raw_equal_pct: 9.04
+  name_length_ratio: mean=0.967 median=1.0
+      >=0.9: 90.94%
+      >=0.7: 95.12%
+      >=0.5: 98.19%
+  name_or_addr_char3_jaccard_ge_0.6_pct: 96.99
+  name_prefix4_equal_pct: 94.81
+  name_token_jaccard: mean=0.9146 median=1.0
+      >=0.9: 86.45%
+      >=0.7: 87.32%
+      >=0.5: 92.99%
+      >=0.3: 95.87%
+  name_token_set_ratio: mean=0.9661 median=1.0
+      >=0.9: 93.4%
+      >=0.8: 95.29%
+      >=0.6: 96.86%
+      >=0.4: 97.72%
+-- MISSED group (means only) --
+  addr_char3_jaccard: mean=0.646 median=0.6842
+      >=0.8: 30.65%
+      >=0.6: 63.65%
+      >=0.4: 84.05%
+      >=0.2: 93.45%
+  addr_edit_similarity: mean=0.6407 median=0.7097
+      >=0.8: 35.85%
+      >=0.6: 63.84%
+      >=0.4: 77.99%
+  addr_exact_norm_equal_pct: 9.29
+  addr_exact_raw_equal_pct: 3.32
+  addr_prefix4_equal_pct: 52.29
+  addr_token_jaccard: mean=0.6149 median=0.6667
+      >=0.7: 41.46%
+      >=0.5: 69.13%
+      >=0.3: 87.67%
+  name_char3_jaccard: mean=0.5312 median=0.5714
+      >=0.9: 11.83%
+      >=0.8: 18.86%
+      >=0.6: 46.34%
+      >=0.4: 70.9%
+      >=0.2: 83.06%
+  name_char4_jaccard: mean=0.4834 median=0.5
+      >=0.9: 11.28%
+      >=0.8: 15.51%
+      >=0.6: 37.12%
+      >=0.4: 62.79%
+      >=0.2: 80.21%
+  name_edit_similarity: mean=0.6395 median=0.7037
+      >=0.9: 24.0%
+      >=0.8: 36.16%
+      >=0.6: 64.62%
+      >=0.4: 80.64%
+  name_exact_norm_equal_pct: 10.73
+  name_exact_raw_equal_pct: 1.22
+  name_length_ratio: mean=0.7996 median=0.8571
+      >=0.9: 44.81%
+      >=0.7: 70.44%
+      >=0.5: 89.34%
+  name_or_addr_char3_jaccard_ge_0.6_pct: 81.44
+  name_prefix4_equal_pct: 67.94
+  name_token_jaccard: mean=0.4686 median=0.5
+      >=0.9: 15.95%
+      >=0.7: 21.61%
+      >=0.5: 56.2%
+      >=0.3: 74.07%
+  name_token_set_ratio: mean=0.7895 median=0.9412
+      >=0.9: 58.73%
+      >=0.8: 70.61%
+      >=0.6: 80.65%
+      >=0.4: 86.07%
+
+==============================================================================
+EXPERIMENT 4 -- TRANSLITERATION / SCRIPT ANALYSIS (India)
+==============================================================================
+india_true_matches: 61,467
+with unequal norm names: 37,392 (60.83%)
+script_pair_distribution (among unequal-name true matches):
+  latin_vs_latin: 26,578
+  latin_vs_devanagari: 5,851
+  latin_vs_other: 4,480
+  latin_vs_mixed: 483
+cross_script (latin<->devanagari) count: 5,851 (15.65% of unequal-name matches)
+
+==============================================================================
+EXPERIMENT 5 -- UNION BLOCKING RECALL SWEEP
+==============================================================================
+sample: 10001 S1 entities, pool: 10,320,219, runtime: 732.1s
+  [B1_country_norm_name]
+      recall=42.623%  avg_candidates=37.1  p95=153.0  p99=631.0  max=1423  reduction=99.9996%
+  [B1_country_norm_name + B2_country_prefix4]
+      recall=79.099%  avg_candidates=7099.8  p95=22543.0  p99=57992.0  max=64426  reduction=99.9312%
+  [B1_country_norm_name + B2_country_prefix4 + B3_country_prefix3]
+      recall=80.298%  avg_candidates=12079.9  p95=33831.0  p99=65306.0  max=93851  reduction=99.8829%
+  [B1_country_norm_name + B2_country_prefix4 + B3_country_prefix3 + B4_country_rare_token]
+      recall=85.187%  avg_candidates=13029.8  p95=36107.0  p99=65637.0  max=99468  reduction=99.8737%

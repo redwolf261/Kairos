@@ -1,0 +1,44 @@
+{
+  "B1_country_norm_name": {
+    "recall_pct": 42.623,
+    "avg_candidates_per_s1": 37.1,
+    "median_candidates_per_s1": 3.0,
+    "p95_candidates_per_s1": 153.0,
+    "p99_candidates_per_s1": 631.0,
+    "max_candidates_per_s1": 1423,
+    "reduction_ratio_pct": 99.9996
+  },
+  "B1_country_norm_name + B2_country_prefix4": {
+    "recall_pct": 79.099,
+    "avg_candidates_per_s1": 7099.8,
+    "median_candidates_per_s1": 2830.0,
+    "p95_candidates_per_s1": 22543.0,
+    "p99_candidates_per_s1": 57992.0,
+    "max_candidates_per_s1": 64426,
+    "reduction_ratio_pct": 99.9312
+  },
+  "B1_country_norm_name + B2_country_prefix4 + B3_country_prefix3": {
+    "recall_pct": 80.298,
+    "avg_candidates_per_s1": 12079.9,
+    "median_candidates_per_s1": 8712.0,
+    "p95_candidates_per_s1": 33831.0,
+    "p99_candidates_per_s1": 65306.0,
+    "max_candidates_per_s1": 93851,
+    "reduction_ratio_pct": 99.8829
+  },
+  "B1_country_norm_name + B2_country_prefix4 + B3_country_prefix3 + B4_country_rare_token": {
+    "recall_pct": 85.187,
+    "avg_candidates_per_s1": 13029.8,
+    "median_candidates_per_s1": 9958.0,
+    "p95_candidates_per_s1": 36107.0,
+    "p99_candidates_per_s1": 65637.0,
+    "max_candidates_per_s1": 99468,
+    "reduction_ratio_pct": 99.8737
+  },
+  "_meta": {
+    "s1_sample_size": 10001,
+    "candidate_pool_size": 10320219,
+    "sample_frac": 0.0048,
+    "seconds": 732.1
+  }
+}

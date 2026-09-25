@@ -1,0 +1,86 @@
+==============================================================================
+ML CHALLENGE 2026 -- DATASET AUDIT SUMMARY (v2)
+==============================================================================
+Total audit runtime so far: 282.7s
+
+-- 1. BASIC STRUCTURE (full file scans) --
+  train_source1: 2,206,821 rows, 200.3 MB
+    missing%: {'business_name': 0.0, 'business_address': 0.0, 'country': 0.0}
+    countries: {'US': 1323633, 'India': 883188}
+  train_source2: 5,034,616 rows, 466.6 MB
+    missing%: {'business_name': 0.0, 'business_address': 3.356, 'country': 0.0}
+    countries: {'US': 3016817, 'India': 2017799}
+  train_source3: 5,285,603 rows, 480.4 MB
+    missing%: {'business_name': 0.0, 'business_address': 3.328, 'country': 0.0}
+    countries: {'US': 3170056, 'India': 2115547}
+  train_ground_truth: 2,206,821 rows, 121.1 MB
+  test_source1: 1,732,544 rows, 166.9 MB
+    missing%: {'business_name': 0.0, 'business_address': 0.0, 'country': 0.0}
+    countries: {'India': 809986, 'US': 663106, 'France': 259452}
+  test_source2: 4,887,273 rows, 485.9 MB
+    missing%: {'business_name': 0.0, 'business_address': 2.648, 'country': 0.0}
+    countries: {'India': 2312565, 'US': 1871330, 'France': 703378}
+  test_source3: 5,082,316 rows, 482.6 MB
+    missing%: {'business_name': 0.0, 'business_address': 2.678, 'country': 0.0}
+    countries: {'India': 2405000, 'US': 1945701, 'France': 731615}
+
+-- 2. NAME STATS (sampled, up to 500,000 rows/file) --
+  train_source1: n=281,821, len(mean/median/p95)=24.05/24.0/37.0, tokens(mean)=2.71, raw_dupe%=15.913, norm_dupe%=24.031
+    top tokens: [['and', 7706], ['india', 2742], ['s', 2525], ['care', 2470], ['c', 2400], ['l', 2299], ['of', 1969], ['associates', 1952], ['group', 1848], ['center', 1659]]
+  train_source2: n=500,000, len(mean/median/p95)=25.11/25.0/40.0, tokens(mean)=2.7, raw_dupe%=4.072, norm_dupe%=19.487
+    top tokens: [['and', 6591], ['l', 4048], ['center', 4008], ['com', 3970], ['partners', 3169], ['s', 3083], ['c', 3010], ['services', 2900], ['group', 2753], ['india', 2192]]
+  train_source3: n=500,000, len(mean/median/p95)=25.2/25.0/42.0, tokens(mean)=2.88, raw_dupe%=3.719, norm_dupe%=16.859
+    top tokens: [['and', 6509], ['center', 4249], ['com', 3974], ['l', 3758], ['services', 3211], ['partners', 3179], ['s', 3142], ['c', 2867], ['group', 2734], ['india', 2278]]
+  test_source1: n=225,000, len(mean/median/p95)=23.83/24.0/36.0, tokens(mean)=2.65, raw_dupe%=14.536, norm_dupe%=22.231
+    top tokens: [['and', 6508], ['india', 3320], ['sas', 2986], ['care', 1871], ['s', 1690], ['l', 1590], ['c', 1548], ['services', 1532], ['of', 1446], ['associates', 1437]]
+  test_source2: n=500,000, len(mean/median/p95)=25.72/25.0/42.0, tokens(mean)=2.7, raw_dupe%=3.861, norm_dupe%=19.287
+    top tokens: [['and', 5922], ['s', 3717], ['com', 3293], ['l', 3268], ['center', 2958], ['group', 2851], ['india', 2760], ['services', 2739], ['partners', 2625], ['holdings', 2221]]
+  test_source3: n=500,000, len(mean/median/p95)=25.67/25.0/42.0, tokens(mean)=2.88, raw_dupe%=3.34, norm_dupe%=16.334
+    top tokens: [['and', 5683], ['s', 3701], ['center', 3346], ['com', 3294], ['l', 3161], ['services', 3102], ['group', 2896], ['partners', 2672], ['india', 2637], ['holdings', 2146]]
+
+-- 3. ADDRESS STATS (sampled, up to 500,000 rows/file) --
+  train_source1: n=281,821, len(mean/median/p95)=52.04/41.0/103.0, empty%=0.0, pin_rate%=6.669, digit_share%=7.767, norm_dupe%=0.78
+  train_source2: n=500,000, len(mean/median/p95)=46.25/37.0/96.0, empty%=3.341, pin_rate%=7.386, digit_share%=8.398, norm_dupe%=4.811
+  train_source3: n=500,000, len(mean/median/p95)=46.7/42.0/91.0, empty%=3.335, pin_rate%=7.308, digit_share%=8.344, norm_dupe%=4.508
+  test_source1: n=225,000, len(mean/median/p95)=57.27/51.0/105.0, empty%=0.0, pin_rate%=4.424, digit_share%=6.442, norm_dupe%=0.779
+  test_source2: n=500,000, len(mean/median/p95)=50.42/43.0/99.0, empty%=2.614, pin_rate%=5.094, digit_share%=7.371, norm_dupe%=4.165
+  test_source3: n=500,000, len(mean/median/p95)=48.82/43.0/94.0, empty%=2.703, pin_rate%=5.069, digit_share%=7.477, norm_dupe%=4.033
+
+-- 4. CROSS-SOURCE OVERLAP (train, S1 vs S2/S3, full data via hashed sets) --
+  S1_vs_source2:
+    exact_raw_name: overlap=168,382 (10.939% of S1 unique values)
+    exact_norm_name: overlap=858,610 (64.826% of S1 unique values)
+    exact_norm_address: overlap=354,182 (16.627% of S1 unique values)
+    name_country: overlap=860,142 (64.804% of S1 unique values)
+    address_country: overlap=354,182 (16.627% of S1 unique values)
+    name_address: overlap=176,997 (8.02% of S1 unique values)
+  S1_vs_source3:
+    exact_raw_name: overlap=176,687 (11.479% of S1 unique values)
+    exact_norm_name: overlap=860,461 (64.966% of S1 unique values)
+    exact_norm_address: overlap=171,440 (8.048% of S1 unique values)
+    name_country: overlap=861,977 (64.942% of S1 unique values)
+    address_country: overlap=171,440 (8.048% of S1 unique values)
+    name_address: overlap=5,083 (0.23% of S1 unique values)
+
+-- 5. GROUND TRUTH (full data) --
+  total S1 entities: 2,206,821
+  singleton%: 5.585%
+  matches per S1 (mean/median/p95/max): 3.461/3/6/11
+  S2-only%: 6.481, S3-only%: 7.454, both%: 80.48, no-match%: 5.585
+  match count distribution: {'0': 123247, '1': 119157, '2': 375212, '3': 530841, '4': 484115, '5': 321957, '6': 164868, '7': 63968, '8': 18680, '9': 4205, '10': 534, '11': 37}
+
+-- 6. BLOCKING EXPERIMENTS --
+  sample: 20835 S1 entities, pool: 10,320,219, runtime: 282.1s
+  country: recall=100.0%, avg_candidates=5352452.1, median_candidates=6186873.0, reduction=48.1363%
+  country_norm_name: recall=42.903%, avg_candidates=37.6, median_candidates=3.0, reduction=99.9996%
+  country_name_prefix4: recall=79.162%, avg_candidates=7169.4, median_candidates=2973.0, reduction=99.9305%
+  country_pin: recall=4.716%, avg_candidates=3.1, median_candidates=0.0, reduction=100.0%
+
+-- FILES WRITTEN --
+  audit/structure_stats.json
+  audit/name_stats.json
+  audit/address_stats.json
+  audit/overlap_stats.json
+  audit/ground_truth_stats.json
+  audit/blocking_stats.json
+  audit/examples.json

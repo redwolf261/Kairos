@@ -1,0 +1,109 @@
+{
+  "n_pairs": 152473,
+  "label": "true_matches",
+  "name_exact_raw_equal_pct": 4.57,
+  "name_exact_norm_equal_pct": 42.78,
+  "name_prefix4_equal_pct": 79.43,
+  "addr_exact_raw_equal_pct": 2.2,
+  "addr_exact_norm_equal_pct": 8.27,
+  "addr_prefix4_equal_pct": 51.95,
+  "name_char3_jaccard": {
+    "mean": 0.6993,
+    "median": 0.7692,
+    "p10": 0.1429,
+    "thresholds_pct_ge": {
+      ">=0.9": 43.49,
+      ">=0.8": 47.98,
+      ">=0.6": 65.59,
+      ">=0.4": 81.31,
+      ">=0.2": 89.12
+    }
+  },
+  "name_char4_jaccard": {
+    "mean": 0.6687,
+    "median": 0.7143,
+    "p10": 0.0833,
+    "thresholds_pct_ge": {
+      ">=0.9": 43.14,
+      ">=0.8": 45.85,
+      ">=0.6": 59.7,
+      ">=0.4": 76.11,
+      ">=0.2": 87.31
+    }
+  },
+  "name_token_jaccard": {
+    "mean": 0.6594,
+    "median": 0.6667,
+    "p10": 0.0,
+    "thresholds_pct_ge": {
+      ">=0.9": 46.11,
+      ">=0.7": 49.72,
+      ">=0.5": 71.94,
+      ">=0.3": 83.39
+    }
+  },
+  "name_edit_similarity": {
+    "mean": 0.7687,
+    "median": 0.9167,
+    "p10": 0.2727,
+    "thresholds_pct_ge": {
+      ">=0.9": 51.28,
+      ">=0.8": 59.02,
+      ">=0.6": 77.28,
+      ">=0.4": 87.57
+    }
+  },
+  "name_token_set_ratio": {
+    "mean": 0.8651,
+    "median": 1.0,
+    "p10": 0.4878,
+    "thresholds_pct_ge": {
+      ">=0.9": 73.56,
+      ">=0.8": 81.17,
+      ">=0.6": 87.59,
+      ">=0.4": 91.05
+    }
+  },
+  "name_length_ratio": {
+    "mean": 0.8712,
+    "median": 1.0,
+    "p10": 0.5517,
+    "thresholds_pct_ge": {
+      ">=0.9": 64.55,
+      ">=0.7": 81.0,
+      ">=0.5": 93.13
+    }
+  },
+  "addr_char3_jaccard": {
+    "mean": 0.6399,
+    "median": 0.6765,
+    "p10": 0.2816,
+    "thresholds_pct_ge": {
+      ">=0.8": 29.21,
+      ">=0.6": 63.12,
+      ">=0.4": 83.95,
+      ">=0.2": 93.18
+    }
+  },
+  "addr_token_jaccard": {
+    "mean": 0.6053,
+    "median": 0.6364,
+    "p10": 0.25,
+    "thresholds_pct_ge": {
+      ">=0.7": 39.87,
+      ">=0.5": 68.34,
+      ">=0.3": 87.25
+    }
+  },
+  "addr_edit_similarity": {
+    "mean": 0.638,
+    "median": 0.7091,
+    "p10": 0.2059,
+    "thresholds_pct_ge": {
+      ">=0.8": 35.33,
+      ">=0.6": 63.99,
+      ">=0.4": 78.01
+    }
+  },
+  "name_or_addr_char3_jaccard_ge_0.6_pct": 88.09
+}

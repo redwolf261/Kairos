@@ -1,0 +1,842 @@
+{
+  "train_source1": {
+    "sampled_rows": 281821,
+    "length_chars": {
+      "mean": 24.05,
+      "median": 24.0,
+      "p95": 37.0,
+      "max": 93
+    },
+    "token_count": {
+      "mean": 2.71,
+      "median": 2.0,
+      "p95": 5.0
+    },
+    "exact_raw_duplicate_rate_pct_of_sample": 15.913,
+    "normalized_duplicate_rate_pct_of_sample": 24.031,
+    "top_tokens": [
+      [
+        "and",
+        7706
+      ],
+      [
+        "india",
+        2742
+      ],
+      [
+        "s",
+        2525
+      ],
+      [
+        "care",
+        2470
+      ],
+      [
+        "c",
+        2400
+      ],
+      [
+        "l",
+        2299
+      ],
+      [
+        "of",
+        1969
+      ],
+      [
+        "associates",
+        1952
+      ],
+      [
+        "group",
+        1848
+      ],
+      [
+        "center",
+        1659
+      ],
+      [
+        "partners",
+        1652
+      ],
+      [
+        "services",
+        1316
+      ],
+      [
+        "health",
+        1296
+      ],
+      [
+        "p",
+        1274
+      ],
+      [
+        "d",
+        1221
+      ],
+      [
+        "solutions",
+        1209
+      ],
+      [
+        "clinic",
+        1202
+      ],
+      [
+        "global",
+        1187
+      ],
+      [
+        "trading",
+        992
+      ],
+      [
+        "brothers",
+        951
+      ],
+      [
+        "international",
+        944
+      ],
+      [
+        "industries",
+        864
+      ],
+      [
+        "technologies",
+        864
+      ],
+      [
+        "foundation",
+        814
+      ],
+      [
+        "medicine",
+        814
+      ],
+      [
+        "enterprises",
+        782
+      ],
+      [
+        "ventures",
+        781
+      ],
+      [
+        "pediatric",
+        755
+      ],
+      [
+        "consultants",
+        725
+      ],
+      [
+        "systems",
+        668
+      ]
+    ],
+    "seconds": 6.8,
+    "note": "duplicate rates measured within the sample, not the full file"
+  },
+  "train_source2": {
+    "sampled_rows": 500000,
+    "length_chars": {
+      "mean": 25.11,
+      "median": 25.0,
+      "p95": 40.0,
+      "max": 101
+    },
+    "token_count": {
+      "mean": 2.7,
+      "median": 3.0,
+      "p95": 5.0
+    },
+    "exact_raw_duplicate_rate_pct_of_sample": 4.072,
+    "normalized_duplicate_rate_pct_of_sample": 19.487,
+    "top_tokens": [
+      [
+        "and",
+        6591
+      ],
+      [
+        "l",
+        4048
+      ],
+      [
+        "center",
+        4008
+      ],
+      [
+        "com",
+        3970
+      ],
+      [
+        "partners",
+        3169
+      ],
+      [
+        "s",
+        3083
+      ],
+      [
+        "c",
+        3010
+      ],
+      [
+        "services",
+        2900
+      ],
+      [
+        "group",
+        2753
+      ],
+      [
+        "india",
+        2192
+      ],
+      [
+        "holdings",
+        1995
+      ],
+      [
+        "care",
+        1779
+      ],
+      [
+        "of",
+        1763
+      ],
+      [
+        "associates",
+        1544
+      ],
+      [
+        "p",
+        1360
+      ],
+      [
+        "d",
+        1174
+      ],
+      [
+        "m",
+        1147
+      ],
+      [
+        "service",
+        1101
+      ],
+      [
+        "health",
+        1066
+      ],
+      [
+        "enterprises",
+        994
+      ],
+      [
+        "clinic",
+        985
+      ],
+      [
+        "industries",
+        961
+      ],
+      [
+        "the",
+        890
+      ],
+      [
+        "ventures",
+        834
+      ],
+      [
+        "solutions",
+        825
+      ],
+      [
+        "public",
+        735
+      ],
+      [
+        "brothers",
+        717
+      ],
+      [
+        "global",
+        688
+      ],
+      [
+        "trading",
+        674
+      ],
+      [
+        "pediatric",
+        669
+      ]
+    ],
+    "seconds": 13.3,
+    "note": "duplicate rates measured within the sample, not the full file"
+  },
+  "train_source3": {
+    "sampled_rows": 500000,
+    "length_chars": {
+      "mean": 25.2,
+      "median": 25.0,
+      "p95": 42.0,
+      "max": 103
+    },
+    "token_count": {
+      "mean": 2.88,
+      "median": 3.0,
+      "p95": 5.0
+    },
+    "exact_raw_duplicate_rate_pct_of_sample": 3.719,
+    "normalized_duplicate_rate_pct_of_sample": 16.859,
+    "top_tokens": [
+      [
+        "and",
+        6509
+      ],
+      [
+        "center",
+        4249
+      ],
+      [
+        "com",
+        3974
+      ],
+      [
+        "l",
+        3758
+      ],
+      [
+        "services",
+        3211
+      ],
+      [
+        "partners",
+        3179
+      ],
+      [
+        "s",
+        3142
+      ],
+      [
+        "c",
+        2867
+      ],
+      [
+        "group",
+        2734
+      ],
+      [
+        "india",
+        2278
+      ],
+      [
+        "care",
+        1918
+      ],
+      [
+        "holdings",
+        1856
+      ],
+      [
+        "of",
+        1774
+      ],
+      [
+        "a",
+        1732
+      ],
+      [
+        "d",
+        1513
+      ],
+      [
+        "associates",
+        1506
+      ],
+      [
+        "p",
+        1431
+      ],
+      [
+        "service",
+        1224
+      ],
+      [
+        "m",
+        1183
+      ],
+      [
+        "enterprises",
+        1147
+      ],
+      [
+        "the",
+        1082
+      ],
+      [
+        "trading",
+        1014
+      ],
+      [
+        "industries",
+        1000
+      ],
+      [
+        "health",
+        995
+      ],
+      [
+        "ventures",
+        984
+      ],
+      [
+        "solutions",
+        923
+      ],
+      [
+        "clinic",
+        874
+      ],
+      [
+        "global",
+        814
+      ],
+      [
+        "public",
+        744
+      ],
+      [
+        "brothers",
+        698
+      ]
+    ],
+    "seconds": 13.1,
+    "note": "duplicate rates measured within the sample, not the full file"
+  },
+  "test_source1": {
+    "sampled_rows": 225000,
+    "length_chars": {
+      "mean": 23.83,
+      "median": 24.0,
+      "p95": 36.0,
+      "max": 82
+    },
+    "token_count": {
+      "mean": 2.65,
+      "median": 2.0,
+      "p95": 4.0
+    },
+    "exact_raw_duplicate_rate_pct_of_sample": 14.536,
+    "normalized_duplicate_rate_pct_of_sample": 22.231,
+    "top_tokens": [
+      [
+        "and",
+        6508
+      ],
+      [
+        "india",
+        3320
+      ],
+      [
+        "sas",
+        2986
+      ],
+      [
+        "care",
+        1871
+      ],
+      [
+        "s",
+        1690
+      ],
+      [
+        "l",
+        1590
+      ],
+      [
+        "c",
+        1548
+      ],
+      [
+        "services",
+        1532
+      ],
+      [
+        "of",
+        1446
+      ],
+      [
+        "associates",
+        1437
+      ],
+      [
+        "club",
+        1348
+      ],
+      [
+        "solutions",
+        1343
+      ],
+      [
+        "group",
+        1334
+      ],
+      [
+        "france",
+        1243
+      ],
+      [
+        "partners",
+        1188
+      ],
+      [
+        "trading",
+        1166
+      ],
+      [
+        "brothers",
+        1099
+      ],
+      [
+        "center",
+        1092
+      ],
+      [
+        "de",
+        1079
+      ],
+      [
+        "technologies",
+        1059
+      ],
+      [
+        "d",
+        1038
+      ],
+      [
+        "global",
+        1021
+      ],
+      [
+        "international",
+        1009
+      ],
+      [
+        "eurl",
+        951
+      ],
+      [
+        "clinic",
+        950
+      ],
+      [
+        "amicale",
+        881
+      ],
+      [
+        "industries",
+        873
+      ],
+      [
+        "foundation",
+        863
+      ],
+      [
+        "health",
+        840
+      ],
+      [
+        "p",
+        836
+      ]
+    ],
+    "seconds": 5.8,
+    "note": "duplicate rates measured within the sample, not the full file"
+  },
+  "test_source2": {
+    "sampled_rows": 500000,
+    "length_chars": {
+      "mean": 25.72,
+      "median": 25.0,
+      "p95": 42.0,
+      "max": 94
+    },
+    "token_count": {
+      "mean": 2.7,
+      "median": 3.0,
+      "p95": 5.0
+    },
+    "exact_raw_duplicate_rate_pct_of_sample": 3.861,
+    "normalized_duplicate_rate_pct_of_sample": 19.287,
+    "top_tokens": [
+      [
+        "and",
+        5922
+      ],
+      [
+        "s",
+        3717
+      ],
+      [
+        "com",
+        3293
+      ],
+      [
+        "l",
+        3268
+      ],
+      [
+        "center",
+        2958
+      ],
+      [
+        "group",
+        2851
+      ],
+      [
+        "india",
+        2760
+      ],
+      [
+        "services",
+        2739
+      ],
+      [
+        "partners",
+        2625
+      ],
+      [
+        "holdings",
+        2221
+      ],
+      [
+        "sas",
+        2051
+      ],
+      [
+        "c",
+        1961
+      ],
+      [
+        "d",
+        1542
+      ],
+      [
+        "france",
+        1411
+      ],
+      [
+        "industries",
+        1351
+      ],
+      [
+        "of",
+        1348
+      ],
+      [
+        "enterprises",
+        1320
+      ],
+      [
+        "ventures",
+        1311
+      ],
+      [
+        "care",
+        1302
+      ],
+      [
+        "m",
+        1294
+      ],
+      [
+        "public",
+        1116
+      ],
+      [
+        "associates",
+        1108
+      ],
+      [
+        "p",
+        1108
+      ],
+      [
+        "club",
+        1049
+      ],
+      [
+        "exports",
+        985
+      ],
+      [
+        "a",
+        969
+      ],
+      [
+        "service",
+        961
+      ],
+      [
+        "solutions",
+        945
+      ],
+      [
+        "infratech",
+        935
+      ],
+      [
+        "brothers",
+        884
+      ]
+    ],
+    "seconds": 13.9,
+    "note": "duplicate rates measured within the sample, not the full file"
+  },
+  "test_source3": {
+    "sampled_rows": 500000,
+    "length_chars": {
+      "mean": 25.67,
+      "median": 25.0,
+      "p95": 42.0,
+      "max": 88
+    },
+    "token_count": {
+      "mean": 2.88,
+      "median": 3.0,
+      "p95": 5.0
+    },
+    "exact_raw_duplicate_rate_pct_of_sample": 3.34,
+    "normalized_duplicate_rate_pct_of_sample": 16.334,
+    "top_tokens": [
+      [
+        "and",
+        5683
+      ],
+      [
+        "s",
+        3701
+      ],
+      [
+        "center",
+        3346
+      ],
+      [
+        "com",
+        3294
+      ],
+      [
+        "l",
+        3161
+      ],
+      [
+        "services",
+        3102
+      ],
+      [
+        "group",
+        2896
+      ],
+      [
+        "partners",
+        2672
+      ],
+      [
+        "india",
+        2637
+      ],
+      [
+        "holdings",
+        2146
+      ],
+      [
+        "sas",
+        2035
+      ],
+      [
+        "c",
+        1942
+      ],
+      [
+        "d",
+        1809
+      ],
+      [
+        "a",
+        1746
+      ],
+      [
+        "industries",
+        1536
+      ],
+      [
+        "enterprises",
+        1523
+      ],
+      [
+        "care",
+        1408
+      ],
+      [
+        "m",
+        1400
+      ],
+      [
+        "of",
+        1346
+      ],
+      [
+        "france",
+        1310
+      ],
+      [
+        "ventures",
+        1307
+      ],
+      [
+        "public",
+        1193
+      ],
+      [
+        "associates",
+        1107
+      ],
+      [
+        "trading",
+        1105
+      ],
+      [
+        "p",
+        1085
+      ],
+      [
+        "exports",
+        1072
+      ],
+      [
+        "service",
+        1047
+      ],
+      [
+        "international",
+        1017
+      ],
+      [
+        "solutions",
+        997
+      ],
+      [
+        "club",
+        977
+      ]
+    ],
+    "seconds": 13.6,
+    "note": "duplicate rates measured within the sample, not the full file"
+  }
+}

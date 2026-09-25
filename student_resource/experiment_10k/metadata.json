@@ -1,0 +1,22 @@
+{
+  "sample_seed": 42,
+  "sample_frac": 0.0048,
+  "number_of_s1": 10001,
+  "number_of_singletons": 0,
+  "number_of_s2_only": 728,
+  "number_of_s3_only": 834,
+  "number_of_both": 8439,
+  "total_true_pairs": 36433,
+  "total_s2_matches": 17688,
+  "total_s3_matches": 18745,
+  "candidate_universe": {
+    "note": "NOT extracted to a file -- use the full train_source2.tsv + train_source3.tsv (or the shared normalized Parquet cache in audit/cache/dataset/) as the candidate universe for blocking experiments against this sample.",
+    "train_source2_total_rows": 5034616,
+    "train_source3_total_rows": 5285603,
+    "combined_pool_size": 10320219
+  },
+  "source_files": {
+    "s1_sample_tsv": "s1_sample.tsv",
+    "true_matches_tsv": "true_matches.tsv"
+  }
+}
