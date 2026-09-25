@@ -1,14 +1,29 @@
 {
   "sample_seed": 42,
-  "sample_frac": 0.0048,
-  "number_of_s1": 10001,
-  "number_of_singletons": 0,
-  "number_of_s2_only": 728,
-  "number_of_s3_only": 834,
-  "number_of_both": 8439,
-  "total_true_pairs": 36433,
-  "total_s2_matches": 17688,
-  "total_s3_matches": 18745,
+  "sampling_method": "uniform random over ALL S1 entities (singletons included) -- NOT filtered to has-match-only",
+  "number_of_s1": 10000,
+  "number_of_singletons": 572,
+  "number_of_s2_only": 636,
+  "number_of_s3_only": 745,
+  "number_of_both": 8047,
+  "total_true_pairs": 34768,
+  "total_s2_matches": 16690,
+  "total_s3_matches": 18078,
+  "representativeness_check": {
+    "sample_ratios": {
+      "singleton_pct": 5.72,
+      "s2_only_pct": 6.36,
+      "s3_only_pct": 7.45,
+      "both_pct": 80.47
+    },
+    "full_dataset_ratios": {
+      "singleton_pct": 5.585,
+      "s2_only_pct": 6.481,
+      "s3_only_pct": 7.454,
+      "both_pct": 80.48
+    },
+    "note": "sample_ratios should be close to full_dataset_ratios; small deviations are expected sampling noise at n=10,000 (e.g. singleton count has a ~0.23pp standard error at this sample size)."
+  },
   "candidate_universe": {
     "note": "NOT extracted to a file -- use the full train_source2.tsv + train_source3.tsv (or the shared normalized Parquet cache in audit/cache/dataset/) as the candidate universe for blocking experiments against this sample.",
     "train_source2_total_rows": 5034616,
