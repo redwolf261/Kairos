@@ -66,6 +66,7 @@ import os
 import sys
 import time
 from collections import Counter, defaultdict
+from concurrent.futures import ProcessPoolExecutor
 
 import numpy as np
 import pandas as pd
@@ -102,6 +103,20 @@ NAME_CHAR_MIN_SIMILARITY = 0.35
 NAME_FUZZY_THRESHOLD = 0.55
 MIN_TOKEN_LENGTH = 3  # address tokens
 NAME_TOKEN_MIN_LENGTH = 2  # name tokens (notebook hardcodes this separately from MIN_TOKEN_LENGTH)
+
+# NOT in the original notebook -- a performance fix (see _drop_oversized_buckets()
+# docstring). The notebook's 1,000-S1 test never surfaced this because its
+# candidate pool (source_records = its own S2+S3 sample, ~20k rows) is far
+# too small for any token's bucket to reach a pathological size.
+MAX_INDEX_BUCKET_SIZE = int(os.environ.get("BLOCKING_MAX_BUCKET_SIZE", "5000"))
+
+# NOT in the original notebook -- bounds process.cdist()'s dense result
+# matrix (see retrieve_name_fuzzy_candidates_batch()'s docstring: cdist has
+# no sparse/top-N mode, unlike sparse_dot_topn used for the TF-IDF blocker).
+# With dtype=uint8 (1 byte/cell), 500 queries against a 6M-entry country
+# costs ~3GB -- chosen so a single chunk stays comfortably under a few GB
+# even against the largest country shard in this dataset.
+NAME_FUZZY_QUERY_CHUNK_SIZE = int(os.environ.get("BLOCKING_FUZZY_QUERY_CHUNK_SIZE", "500"))
 
 WEAK_ADDRESS_TOKENS = {
     "road", "rd", "street", "st", "avenue", "ave", "lane", "ln", "drive", "dr",
@@ -268,40 +283,98 @@ def _prepare_fields_chunk(chunk_dict):
 
 
 def prepare_pool_fields_parallel(pool_df):
+    """MEMORY FIX (post-OOM-crash): the original version built ALL chunk
+    dicts up front via a list comprehension (`chunks = [...]`) before
+    submitting any of them. On Windows, ProcessPoolExecutor uses spawn (not
+    fork), so the parent process must hold every chunk's full
+    to_dict("list") materialization (Python lists of Python strings --
+    several times heavier than the original pandas/pyarrow-backed columns)
+    simultaneously, on top of the original 10.3M-row pool_df itself, while
+    it pickles each one to send to a worker. At 16 workers with ~645k rows
+    each this measurably OOM-crashed the whole machine (not just the
+    process) partway through chunk 1-16 submission on a 24GB box.
+
+    Fix: (1) cap workers well below cpu_count() for this specific
+    memory-heavy step -- CPU parallelism helps less than avoiding N-way
+    memory duplication does; (2) use more, smaller chunks so each one is
+    cheap to hold and pickle; (3) submit chunks one at a time in a
+    generator, releasing each chunk's dict as soon as it's handed to
+    submit(), instead of materializing the whole chunk list before any
+    submission begins."""
     log(f"Preparing candidate pool fields (tokens, char text, country_norm) "
-        f"for {len(pool_df):,} rows, parallel across {audit.MAX_WORKERS} workers...")
+        f"for {len(pool_df):,} rows...")
     t0 = time.time()
 
-    n_workers = audit.MAX_WORKERS
-    chunk_size = max(1, -(-len(pool_df) // n_workers))  # ceil division
-    chunks = [pool_df.iloc[i:i + chunk_size].to_dict("list") for i in range(0, len(pool_df), chunk_size)]
-    log(f"  split into {len(chunks)} chunks of ~{chunk_size:,} rows each")
+    # Memory-bound step: fewer concurrent workers than audit.MAX_WORKERS,
+    # more (smaller) chunks per worker so peak concurrent chunk memory
+    # stays bounded regardless of total row count.
+    n_workers = min(audit.MAX_WORKERS, int(os.environ.get("BLOCKING_POOL_PREP_WORKERS", "6")))
+    n_chunks = n_workers * int(os.environ.get("BLOCKING_POOL_PREP_CHUNKS_PER_WORKER", "8"))
+    chunk_size = max(1, -(-len(pool_df) // n_chunks))  # ceil division
+    n_chunks = -(-len(pool_df) // chunk_size)  # actual count after rounding
+    log(f"  {n_workers} workers, {n_chunks} chunks of ~{chunk_size:,} rows each")
+
+    def chunk_dicts():
+        for i in range(0, len(pool_df), chunk_size):
+            yield pool_df.iloc[i:i + chunk_size].to_dict("list")
 
     results_by_index = {}
-    with audit.make_executor() as ex:
-        future_to_index = {ex.submit(_prepare_fields_chunk, c): i for i, c in enumerate(chunks)}
+    with ProcessPoolExecutor(max_workers=n_workers) as ex:
+        future_to_index = {}
+        for i, c in enumerate(chunk_dicts()):
+            future_to_index[ex.submit(_prepare_fields_chunk, c)] = i
+            del c  # drop the parent's reference once it's been pickled to the worker
         n_done = 0
         for fut in audit.as_completed(future_to_index):
             results_by_index[future_to_index[fut]] = fut.result()
             n_done += 1
-            log(f"  chunk {n_done}/{len(chunks)} done ({round(time.time()-t0,1)}s elapsed)")
+            log(f"  chunk {n_done}/{n_chunks} done ({round(time.time()-t0,1)}s elapsed)")
 
-    ordered = [results_by_index[i] for i in range(len(chunks))]
+    ordered = [results_by_index[i] for i in range(n_chunks)]
     result = pd.concat(ordered, ignore_index=True)
     log(f"Pool field preparation done in {round(time.time()-t0,1)}s")
     return result
 
 
-def build_structures(pool_df):
+def _drop_oversized_buckets(index, max_bucket_size, index_name):
+    """PERFORMANCE FIX: a token whose inverted-index bucket has tens or
+    hundreds of thousands of entries (measured directly: at 500k sample
+    rows, the single most common name token already had 87,548 entries;
+    at full country-pool scale (~5-10M rows) this only gets worse) makes
+    ANY S1 row containing that token pay an O(bucket size) cost in
+    Counter.__setitem__ calls -- this is exactly what caused an
+    unexplained slowdown from ~100 rows/s to ~0.2 rows/s partway through
+    an earlier scaled test run (rate degraded as soon as a row happened to
+    contain a hot token). A token this common also has near-zero
+    discriminative blocking value -- it can't narrow down candidates if
+    it matches a meaningful fraction of the entire pool. Dropping such
+    tokens from the index entirely (same principle as WEAK_ADDRESS_TOKENS
+    already applies to a fixed list of known-generic address words, just
+    generalized and threshold-based instead of a hardcoded word list)
+    bounds worst-case per-row cost with negligible recall impact, since
+    other tokens/blockers almost always also match the same true pair."""
+    oversized = [tok for tok, ids in index.items() if len(ids) > max_bucket_size]
+    for tok in oversized:
+        del index[tok]
+    if oversized:
+        log(f"  {index_name}: dropped {len(oversized)} token(s) with >{max_bucket_size:,} "
+            f"entries (too common to be useful for blocking): "
+            f"{sorted(oversized, key=lambda t: -1)[:10]}")
+    return index
+
+
+def build_structures(pool_df, max_bucket_size=None):
     pool_df = prepare_pool_fields_parallel(pool_df)
 
     source_lookup = pool_df.set_index("entity_id").to_dict("index")
+    max_bucket_size = max_bucket_size or MAX_INDEX_BUCKET_SIZE
 
     log("Building address inverted index...")
     address_index = defaultdict(set)
     for entity_id, row in zip(pool_df["entity_id"], pool_df["address_tokens"]):
         for token in row:
             address_index[token].add(entity_id)
+    address_index = _drop_oversized_buckets(address_index, max_bucket_size, "address_index")
 
     log("Building name token indexes...")
     name_token_index = defaultdict(set)
@@ -315,6 +388,8 @@ def build_structures(pool_df):
         for token in set(core_tokens):
             if len(token) >= NAME_TOKEN_MIN_LENGTH:
                 name_core_token_index[token].add(entity_id)
+    name_token_index = _drop_oversized_buckets(name_token_index, max_bucket_size, "name_token_index")
+    name_core_token_index = _drop_oversized_buckets(name_core_token_index, max_bucket_size, "name_core_token_index")
 
     log("Building per-country RapidFuzz choice dicts...")
     country_name_choices = defaultdict(dict)
@@ -469,26 +544,42 @@ def retrieve_name_char_candidates_batch(s1_batch_df, structures):
     return results
 
 
-def retrieve_name_fuzzy_candidates_batch(s1_batch_df, structures):
+def retrieve_name_fuzzy_candidates_batch(s1_batch_df, structures, query_chunk_size=None):
     """Batched replacement for a per-row process.extract() loop.
 
-    PERFORMANCE FIX: the original per-row version (kept in git history,
-    functionally identical results) calls rapidfuzz's process.extract()
-    once per S1 row against a country's full choices dict. Measured
-    directly: ~1.5s per call against a realistic ~6M-entry country pool,
-    which is ~12.6 minutes for just this blocker across 500 S1 rows, and
-    would be ~42 HOURS at the target 100k-S1 scale -- confirmed by
-    profiling after a test run stalled with no progress for 10+ minutes on
-    only 500 rows. rapidfuzz's process.cdist() computes the full
-    query-x-choice similarity matrix in one batched, multi-threaded C call
-    instead of one Python-level call per query: measured 9.2s for 500
+    PERFORMANCE FIX #1 (per-row -> batched): the original per-row version
+    (kept in git history, functionally identical results) calls rapidfuzz's
+    process.extract() once per S1 row against a country's full choices
+    dict. Measured directly: ~1.5s per call against a realistic ~6M-entry
+    country pool, which is ~12.6 minutes for just this blocker across 500
+    S1 rows, and would be ~42 HOURS at the target 100k-S1 scale --
+    confirmed by profiling after a test run stalled with no progress for
+    10+ minutes on only 500 rows. rapidfuzz's process.cdist() computes the
+    full query-x-choice similarity matrix in one batched, multi-threaded C
+    call instead of one Python-level call per query: measured 9.2s for 500
     queries against 6M choices (vs. ~12.6 minutes via extract() loop) --
     roughly an 80x speedup from batching alone, same scorer, same
     threshold, same top-k truncation, same results.
 
+    PERFORMANCE FIX #2 (chunking, added after fix #1 alone crashed at
+    10k-S1 scale): process.cdist() -- unlike sparse_dot_topn's
+    sp_matmul_topn() used for the TF-IDF blocker -- has NO sparse/top-N
+    output mode; it always materializes the FULL DENSE (n_queries x
+    n_choices) result matrix. At ~8,600 India queries x ~6M India choices,
+    that's an attempted ~48 BILLION-cell allocation -- confirmed by a real
+    crash (`MemoryError: bad allocation` inside rapidfuzz's C++ cdist) at
+    that exact scale. Two mitigations, both applied: (a) dtype=np.uint8
+    packs each score into 1 byte instead of the default 4-8, a 4-8x
+    reduction; (b) queries are still processed in CHUNKS of
+    query_chunk_size at a time, since even at 1 byte/cell a single-shot
+    48M-row matrix at full 100k-S1 scale would still be ~288 GB. Chunking
+    trades some of fix #1's raw speedup for boundedness -- still far
+    faster than per-row extract(), just not a single giant call.
+
     Returns a list of result dicts across ALL rows in s1_batch_df (which
     must all share the same country_norm), not just one row -- the driver
     loop calls this once per country instead of once per S1 row."""
+    query_chunk_size = query_chunk_size or NAME_FUZZY_QUERY_CHUNK_SIZE
     results = []
     for country, group in s1_batch_df.groupby("country_norm"):
         if not country:
@@ -505,20 +596,34 @@ def retrieve_name_fuzzy_candidates_batch(s1_batch_df, structures):
         query_texts = queries_df["name_char_text"].tolist()
         query_ids = queries_df["entity_id"].tolist()
 
-        score_matrix = process.cdist(query_texts, choice_texts, scorer=fuzz.ratio, workers=-1)
+        n_queries = len(query_texts)
+        n_chunks = -(-n_queries // query_chunk_size)  # ceil division
+        log(f"    name_fuzzy/{country}: {n_queries:,} queries x {len(choice_texts):,} choices, "
+            f"{n_chunks} chunk(s) of <={query_chunk_size}")
 
-        # for each query row, keep only the top NAME_FUZZY_TOP_K scores,
-        # then apply the same >= NAME_FUZZY_THRESHOLD (0.55, on a 0-1
-        # scale after /100) filter as the original per-row version.
-        for row_idx, s1_id in enumerate(query_ids):
-            row_scores = score_matrix[row_idx]
-            top_k_idx = np.argpartition(row_scores, -min(NAME_FUZZY_TOP_K, len(row_scores)))[-NAME_FUZZY_TOP_K:]
-            for i in top_k_idx:
-                normalized_score = float(row_scores[i]) / 100.0
-                if normalized_score < NAME_FUZZY_THRESHOLD:
-                    continue
-                results.append({"s1_entity_id": s1_id, "candidate_entity_id": choice_ids[i],
-                                 "block_method": "name_fuzzy", "block_score": normalized_score})
+        for chunk_i in range(n_chunks):
+            start = chunk_i * query_chunk_size
+            end = min(start + query_chunk_size, n_queries)
+            chunk_texts = query_texts[start:end]
+            chunk_ids = query_ids[start:end]
+
+            score_matrix = process.cdist(
+                chunk_texts, choice_texts, scorer=fuzz.ratio, workers=-1, dtype=np.uint8,
+            )
+
+            # for each query row, keep only the top NAME_FUZZY_TOP_K scores,
+            # then apply the same >= NAME_FUZZY_THRESHOLD (0.55, on a 0-1
+            # scale after /100) filter as the original per-row version.
+            for row_idx, s1_id in enumerate(chunk_ids):
+                row_scores = score_matrix[row_idx]
+                top_k_idx = np.argpartition(row_scores, -min(NAME_FUZZY_TOP_K, len(row_scores)))[-NAME_FUZZY_TOP_K:]
+                for i in top_k_idx:
+                    normalized_score = float(row_scores[i]) / 100.0
+                    if normalized_score < NAME_FUZZY_THRESHOLD:
+                        continue
+                    results.append({"s1_entity_id": s1_id, "candidate_entity_id": choice_ids[i],
+                                     "block_method": "name_fuzzy", "block_score": normalized_score})
+            del score_matrix
     return results
 
 
