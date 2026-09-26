@@ -242,7 +242,7 @@ def check_stage3(path):
     feature_cols = [c for c in df.columns if c not in required]
     log(f"Feature columns present ({len(feature_cols)}): {feature_cols}")
 
-    known_features = set(sc.STAGE3_FEATURE_FILE_DRAFT["feature_columns_draft"])
+    known_features = set(sc.STAGE3_FEATURE_FILE_DRAFT["feature_columns_implemented"])
     unknown = [c for c in feature_cols if c not in known_features]
     if unknown:
         log(f"NOTE -- feature columns not in the draft list (fine if "

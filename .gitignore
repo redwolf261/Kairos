@@ -35,3 +35,9 @@ Thumbs.db
 
 
 blocking_results/
+
+# === Large regenerable intermediate pipeline artifacts (Parquet feature/
+# probability files, the raw finalized-sample TSV) -- keep the small final
+# output/ + JSON reports as evidence, regenerate the rest from the scripts ===
+student_resource/code/business_entity_resolution/pipeline_output/*.parquet
+student_resource/code/business_entity_resolution/pipeline_output/candidate_pairs_sample.tsv

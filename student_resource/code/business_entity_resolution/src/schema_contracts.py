@@ -124,62 +124,80 @@ CANDIDATE_PAIRS_INTERMEDIATE_FORMAT_SEEN_IN_REPO = {
 # ---------------------------------------------------------------------------
 # Stage 3 -- Feature Parquet (pairwise features for the candidate set)
 # ---------------------------------------------------------------------------
-# DRAFT -- nobody has built this yet as of this file's writing. Proposed
-# minimum shape so Stage 4 (LightGBM) has something concrete to build
-# against without waiting for the final feature list to be finalized.
+# IMPLEMENTED at sample scale: stage3_features.py, output at
+# pipeline_output/stage3_features.parquet. Join-key columns use
+# s1_entity_id/candidate_entity_id (the FLAT intermediate convention, same
+# as CANDIDATE_PAIRS_INTERMEDIATE_FORMAT_SEEN_IN_REPO below) rather than
+# source1_entity_id/candidate_entity_ids (which is reserved for the FINAL
+# grouped/comma-joined shape) -- this file is one row per (S1, candidate)
+# pair, not grouped, so the flat naming is the consistent choice. An
+# earlier draft of this contract used source1_entity_id here inconsistently
+# with that rule; smoke_test.py's Stage 3/4 checks were caught failing
+# against real pipeline output because of exactly that mismatch, which is
+# what surfaced and fixed it.
 
 STAGE3_FEATURE_FILE_DRAFT = {
     "required_columns": [
-        "source1_entity_id",    # str -- join key back to S1
-        "candidate_entity_id",  # str -- join key back to S2/S3 (flat, one row per pair)
-        "label",                # int 0/1, ONLY present in training feature files
-                                 # (true match per ground truth), ABSENT in
-                                 # inference feature files
+        "s1_entity_id",          # str -- join key back to S1 (flat format)
+        "candidate_entity_id",   # str -- join key back to S2/S3 (flat, one row per pair)
+        "label",                 # int 0/1, ONLY present in training feature files
+                                  # (true match per ground truth), ABSENT in
+                                  # inference feature files
     ],
-    "feature_columns_draft": [
-        # one representative metric per family, per the hardware-aware plan
-        "name_char_ngram_similarity",  # float32, reuse from blocking's R4 char-tfidf, don't recompute
-        "name_token_jaccard",          # float32
-        "name_edit_similarity",        # float32 (Jaro-Winkler OR Levenshtein, pick one)
-        "name_tfidf_cosine",           # float32
-        "token_idf_overlap",           # float32
-        "rare_token_match",            # bool/int
-        "address_token_overlap",       # float32
-        "house_number_match",          # int {-1: conflict, 0: n/a, 1: match}
-        "postal_match",                # int {-1: conflict, 0: n/a, 1: match}
-        "script_tag_match",            # bool/int
-        "transliterated_similarity",   # float32
-        "name_missing_s1",             # bool
-        "name_missing_candidate",      # bool
-        "address_missing_s1",          # bool
-        "address_missing_candidate",   # bool
-        "country_conflict",            # bool
-        "route_count",                 # int -- how many blocking routes surfaced this pair
-        "best_rank",                   # int -- best (lowest) rank across routes
-        "sibling_rank",                # int -- this candidate's rank among the S1's own candidates
-        "score_gap_to_next_best",      # float32
+    "feature_columns_implemented": [
+        # actually computed by stage3_features.py, reusing
+        # experiments.py's compute_features_parallel() for the similarity
+        # metrics rather than reimplementing them
+        "name_exact_raw_equal", "name_exact_norm_equal",
+        "name_char3_jaccard", "name_char4_jaccard", "name_token_jaccard",
+        "name_edit_similarity", "name_token_set_ratio", "name_length_ratio",
+        "name_prefix4_equal",
+        "addr_exact_raw_equal", "addr_exact_norm_equal",
+        "addr_char3_jaccard", "addr_char4_jaccard", "addr_token_jaccard",
+        "addr_edit_similarity", "addr_token_set_ratio", "addr_length_ratio",
+        "addr_prefix4_equal",
+        "route_count",             # = num_blockers from blocking provenance
+        "max_block_score",         # passthrough from blocking provenance
+        "country_conflict", "name_missing_s1", "name_missing_candidate",
+        "address_missing_s1", "address_missing_candidate",
+    ],
+    "feature_columns_not_yet_implemented": [
+        # from the original wishlist -- cut for the sample-scale pass
+        # (schema_contracts.py's job is to document reality, not aspiration)
+        "name_tfidf_cosine", "token_idf_overlap", "rare_token_match",
+        "house_number_match", "postal_match", "script_tag_match",
+        "transliterated_similarity", "best_rank", "sibling_rank",
+        "score_gap_to_next_best",
     ],
     "dtype_note": "float32 throughout for the numeric features -- keeps a "
                   "150k-S1 x ~30-candidate x ~25-feature shard around "
                   "450MB, per the hardware-aware plan's own sizing.",
-    "sharding": "shard by S1-id range (e.g. 100k-200k S1 entities per "
-               "Parquet file), never one file for the whole ~117M-pair pool.",
+    "sharding": "NOT YET IMPLEMENTED -- current script loads the whole "
+               "1,000-S1 sample in memory. Sharding by S1-id range is "
+               "required before running at full (~2.2M S1) scale.",
 }
 
 # ---------------------------------------------------------------------------
 # Stage 4 -- Calibrated probability output
 # ---------------------------------------------------------------------------
-# What Stage 5 (the decision engine, Person D's own core deliverable) reads.
+# IMPLEMENTED at sample scale: stage4_train_model.py, output at
+# pipeline_output/stage4_probabilities.parquet. Same flat-format join-key
+# naming as Stage 3, for the same reason (one row per pair, not grouped).
 
 STAGE4_PROBABILITY_FORMAT_DRAFT = {
     "required_columns": [
-        "source1_entity_id",       # str
-        "candidate_entity_id",     # str -- flat, one row per (S1, candidate) pair
-        "raw_score",                # float32, LightGBM's raw output
-        "calibrated_probability",   # float32 in [0, 1], AFTER Platt/isotonic calibration
+        "s1_entity_id",             # str
+        "candidate_entity_id",      # str -- flat, one row per (S1, candidate) pair
+        "raw_score",                # float, LightGBM's raw predict_proba output
+        "calibrated_probability",   # float in [0, 1], after isotonic calibration
+                                     # (sklearn CalibratedClassifierCV + FrozenEstimator --
+                                     # cv="prefit" was removed in newer sklearn, see
+                                     # stage4_train_model.py for the replacement)
     ],
-    "note": "Stage 5 needs calibrated_probability, not raw_score, for the "
-           "Monte Carlo expected-F0.5 prefix selection to be meaningful -- "
-           "the simulation treats this column as an actual match "
-           "probability.",
+    "note": "Stage 5's flat-threshold decision rule uses calibrated_probability. "
+           "Monte Carlo expected-F0.5 prefix selection would also use this "
+           "column but is NOT YET IMPLEMENTED in stage5_decision_engine.py "
+           "-- the flat threshold already achieves 0.9481 macro F_0.5 on a "
+           "genuinely held-out GroupKFold split, so it shipped first per "
+           "the plan's own fallback-ladder principle.",
 }

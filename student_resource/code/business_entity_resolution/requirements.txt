@@ -15,9 +15,11 @@ sentence-transformers==6.1.0
 transformers==5.17.0
 huggingface_hub==1.33.0
 
-# LightGBM stage (Stage 4) -- add when that stage is built
-# lightgbm
+# Stage 4: pairwise classifier + calibration + GroupKFold
+lightgbm==4.7.0
+scikit-learn==1.9.1
 
-# Sparse matrix retrieval (Stage 2, R4 char-ngram blocking) -- add when that stage is built
-# scikit-learn
+# Sparse matrix retrieval (used by teammate's blocking notebooks for
+# char-ngram TF-IDF + cosine blocking, src/blocking_eval_approach.ipynb)
+# scikit-learn (already listed above) covers TfidfVectorizer/cosine_similarity
 # sparse_dot_topn
