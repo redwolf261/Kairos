@@ -1,0 +1,32 @@
+{
+  "gpu_check": {
+    "torch_version": "2.11.0+cu128",
+    "cuda_available": true,
+    "cuda_version": "12.8",
+    "device_name": "NVIDIA GeForce RTX 5050 Laptop GPU",
+    "device_count": 1,
+    "total_vram_gb": 8.52,
+    "matmul_4096_seconds": 0.315,
+    "matmul_ok": true
+  },
+  "labse_benchmark": {
+    "skipped": false,
+    "model_name": "sentence-transformers/LaBSE",
+    "model_load_seconds": 10.4,
+    "n_names_encoded": 100000,
+    "batch_size": 256,
+    "encode_seconds": 50.9,
+    "names_per_second": 1966.5,
+    "embedding_dim": 768,
+    "vram_allocated_after_load_gb": 1.9,
+    "vram_peak_during_encode_gb": 2.18,
+    "vram_headroom_gb_on_8gb_card": 5.82,
+    "projection": {
+      "full_train_dataset_rows_s1_s2_s3": 12527040,
+      "projected_seconds_to_encode_all": 6370.0,
+      "projected_minutes_to_encode_all": 106.2,
+      "note": "This projects encoding EVERY row. The plan scopes LaBSE to non-Latin-script or thin-after-R1-R5 entities only -- the real workload will be a fraction of this, but this number is the worst-case upper bound for background encoding."
+    }
+  },
+  "total_seconds": 71.2
+}

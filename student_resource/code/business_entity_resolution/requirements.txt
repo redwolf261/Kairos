@@ -1,0 +1,23 @@
+# Core data processing
+pandas==3.0.6
+numpy==2.5.3
+pyarrow==25.0.1
+
+# String similarity / normalization (audit + experiments pipeline)
+rapidfuzz==3.14.6
+regex==2026.9.10
+
+# GPU / embeddings (LaBSE stretch-goal blocking; optional, not on required path)
+# Install torch separately for your CUDA version, e.g.:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu128
+torch==2.11.0+cu128
+sentence-transformers==6.1.0
+transformers==5.17.0
+huggingface_hub==1.33.0
+
+# LightGBM stage (Stage 4) -- add when that stage is built
+# lightgbm
+
+# Sparse matrix retrieval (Stage 2, R4 char-ngram blocking) -- add when that stage is built
+# scikit-learn
+# sparse_dot_topn
