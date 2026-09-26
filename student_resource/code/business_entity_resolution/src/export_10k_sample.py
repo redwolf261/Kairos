@@ -46,6 +46,7 @@ import os
 import sys
 
 import numpy as np
+import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import audit
@@ -84,7 +85,7 @@ def sample_representative_s1(n_target, seed):
     for s1_id in s1_sample["s1_id"]:
         for cid in gt.get(s1_id, ()):
             pair_rows.append((s1_id, cid, "S2" if cid.startswith("S2-") else "S3"))
-    import pandas as pd
+
     pairs = pd.DataFrame(pair_rows, columns=["s1_id", "cid", "cid_source"])
     log(f"{len(pairs):,} true pairs among the sample "
         f"({(pairs['cid_source']=='S2').sum():,} S2, {(pairs['cid_source']=='S3').sum():,} S3)")
