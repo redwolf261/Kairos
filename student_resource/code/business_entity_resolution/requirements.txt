@@ -19,7 +19,11 @@ huggingface_hub==1.33.0
 lightgbm==4.7.0
 scikit-learn==1.9.1
 
-# Sparse matrix retrieval (used by teammate's blocking notebooks for
-# char-ngram TF-IDF + cosine blocking, src/blocking_eval_approach.ipynb)
-# scikit-learn (already listed above) covers TfidfVectorizer/cosine_similarity
-# sparse_dot_topn
+# Sparse matrix retrieval -- scikit-learn (already listed above) provides
+# TfidfVectorizer; sparse_dot_topn provides the memory-bounded top-N sparse
+# cosine similarity (scaled_blocking.py's name_char_tfidf blocker, needed
+# because a naive per-row/dense-batch cosine_similarity() blows up at scale)
+sparse_dot_topn==1.2.0
+
+# Transliteration (scaled_blocking.py, porting the teammate's blocking approach)
+anyascii==0.3.3
