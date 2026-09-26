@@ -29,80 +29,80 @@
     "address_missing_s1",
     "address_missing_candidate"
   ],
-  "raw_auc_held_out": 0.9966,
-  "calibrated_auc_held_out": 0.9969,
+  "raw_auc_held_out": 0.9999,
+  "calibrated_auc_held_out": 0.9955,
   "threshold_sweep": [
     {
       "threshold": 0.1,
-      "macro_f0.5": 0.848107881898415
+      "macro_f0.5": 0.9720047198406732
     },
     {
       "threshold": 0.15,
-      "macro_f0.5": 0.8821806441037217
+      "macro_f0.5": 0.9720047198406732
     },
     {
       "threshold": 0.2,
-      "macro_f0.5": 0.9326905528626583
+      "macro_f0.5": 0.9720047198406732
     },
     {
       "threshold": 0.25,
-      "macro_f0.5": 0.93439995457206
+      "macro_f0.5": 0.9720047198406732
     },
     {
       "threshold": 0.3,
-      "macro_f0.5": 0.935410055582161
+      "macro_f0.5": 0.9720047198406732
     },
     {
       "threshold": 0.35,
-      "macro_f0.5": 0.9480652655471167
+      "macro_f0.5": 0.9720047198406732
     },
     {
       "threshold": 0.4,
-      "macro_f0.5": 0.9405953743272254
+      "macro_f0.5": 0.9720047198406732
     },
     {
       "threshold": 0.45,
-      "macro_f0.5": 0.9417105704056569
+      "macro_f0.5": 0.9720047198406732
     },
     {
       "threshold": 0.5,
-      "macro_f0.5": 0.9362343799294665
+      "macro_f0.5": 0.9720047198406732
     },
     {
       "threshold": 0.55,
-      "macro_f0.5": 0.9386586223537088
+      "macro_f0.5": 0.9720047198406732
     },
     {
       "threshold": 0.6,
-      "macro_f0.5": 0.9386586223537088
+      "macro_f0.5": 0.973816111063829
     },
     {
       "threshold": 0.65,
-      "macro_f0.5": 0.9386586223537088
+      "macro_f0.5": 0.9751408973886154
     },
     {
       "threshold": 0.7,
-      "macro_f0.5": 0.9380336223537088
+      "macro_f0.5": 0.980755499289982
     },
     {
       "threshold": 0.75,
-      "macro_f0.5": 0.9363669556870421
+      "macro_f0.5": 0.983612642147125
     },
     {
       "threshold": 0.8,
-      "macro_f0.5": 0.9363669556870421
+      "macro_f0.5": 0.983612642147125
     },
     {
       "threshold": 0.85,
-      "macro_f0.5": 0.9358907652108518
+      "macro_f0.5": 0.983612642147125
     },
     {
       "threshold": 0.9,
-      "macro_f0.5": 0.9347595434913947
+      "macro_f0.5": 0.983612642147125
     }
   ],
-  "best_flat_threshold": 0.35,
-  "best_flat_threshold_macro_f0.5": 0.9481,
+  "best_flat_threshold": 0.75,
+  "best_flat_threshold_macro_f0.5": 0.9836,
   "calibrated_probability_range": [
     0.0,
     1.0

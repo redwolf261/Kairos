@@ -11,10 +11,11 @@ Steps, per the hardware-aware plan doc's Stage 5 spec:
   2. Flat-threshold decision rule using Stage 4's best threshold (found via
      grid search on a genuinely held-out set in stage4_train_model.py).
   3. (Monte Carlo expected-F0.5 prefix selection -- deferred; the flat
-     threshold already scores 0.9481 macro F_0.5 on held-out data, which is
-     strong, and the plan's own fallback-ladder principle says ship the
-     simpler working version first. Left as a documented next step, not
-     implemented in this pass.)
+     threshold already scores well on held-out data (see
+     stage4_model_report.json for the actual current number), and the
+     plan's own fallback-ladder principle says ship the simpler working
+     version first. Left as a documented next step, not implemented in
+     this pass.)
   4. Write output/matching_results.tsv and output/candidate_pairs.tsv in
      the exact required shape, reusing finalize_candidate_pairs()
      (candidate_pairs.tsv directly; matching_results.tsv via the same
@@ -50,29 +51,11 @@ import sys
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import audit
 from finalize_candidate_pairs import finalize_candidate_pairs
-
-REPO_ROOT = os.path.abspath(os.path.join(audit.STUDENT_RESOURCE, ".."))
-SAMPLED_DATA_DIR = os.path.join(REPO_ROOT, "src", "sampled_data")
-PIPELINE_OUTPUT_DIR = os.path.normpath(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "pipeline_output")
+from pipeline_common import (
+    PIPELINE_OUTPUT_DIR, FINAL_OUTPUT_DIR, SAMPLE_SOURCE1_PATH, SAMPLE_GROUND_TRUTH_PATH,
+    macro_f05_per_entity, load_sample_ground_truth, run_official_validator, log,
 )
-OUTPUT_DIR = os.path.join(PIPELINE_OUTPUT_DIR, "output")
-
-
-def log(msg):
-    print(msg, flush=True)
-
-
-def f_beta_score(precision, recall, beta=0.5):
-    if precision == 0 and recall == 0:
-        return 0.0
-    beta_sq = beta ** 2
-    denom = beta_sq * precision + recall
-    if denom == 0:
-        return 0.0
-    return (1 + beta_sq) * precision * recall / denom
 
 
 def enforce_one_parent_per_candidate(df, score_col="calibrated_probability"):
@@ -93,35 +76,25 @@ def enforce_one_parent_per_candidate(df, score_col="calibrated_probability"):
 def macro_f05_real(matches_df, gt_map, all_s1_ids):
     """Real macro F_0.5 against ACTUAL ground truth (not the held-out proxy
     used during threshold selection in stage4) -- this is the true
-    challenge-equivalent score for this sample-scale run."""
-    scores = []
+    challenge-equivalent score for this sample-scale run. Thin adapter:
+    builds the per-entity predicted-id sets this call needs and delegates
+    the actual F_0.5 math to pipeline_common.macro_f05_per_entity(), the
+    same implementation stage4_train_model.py uses."""
     matches_by_s1 = matches_df.groupby("source1_entity_id")["matched_entity_ids"].first()
-    for s1_id in all_s1_ids:
-        true_matches = gt_map.get(s1_id, set())
-        predicted_str = matches_by_s1.get(s1_id, "")
-        predicted = set(predicted_str.split(",")) if predicted_str else set()
-
-        if not true_matches and not predicted:
-            scores.append(1.0)
-            continue
-        if not predicted:
-            scores.append(0.0)
-            continue
-
-        n_correct = len(true_matches & predicted)
-        precision = n_correct / len(predicted) if predicted else 0.0
-        recall = n_correct / len(true_matches) if true_matches else 0.0
-        scores.append(f_beta_score(precision, recall, beta=0.5))
-    return sum(scores) / len(scores) if scores else 0.0
+    predicted_sets = {
+        s1_id: (set(ids_str.split(",")) if ids_str else set())
+        for s1_id, ids_str in matches_by_s1.items()
+    }
+    return macro_f05_per_entity(gt_map, predicted_sets, all_s1_ids)
 
 
 def main():
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    os.makedirs(FINAL_OUTPUT_DIR, exist_ok=True)
 
     probs_path = os.path.join(PIPELINE_OUTPUT_DIR, "stage4_probabilities.parquet")
     report_path = os.path.join(PIPELINE_OUTPUT_DIR, "stage4_model_report.json")
-    s1_path = os.path.join(SAMPLED_DATA_DIR, "sample_source1.tsv")
-    gt_path = os.path.join(SAMPLED_DATA_DIR, "sample_ground_truth.tsv")
+    s1_path = SAMPLE_SOURCE1_PATH
+    gt_path = SAMPLE_GROUND_TRUTH_PATH
 
     for p in (probs_path, report_path, s1_path, gt_path):
         if not os.path.isfile(p):
@@ -161,7 +134,7 @@ def main():
     candidate_pairs_final = finalize_candidate_pairs(
         probs, required_ids, s1_col="s1_entity_id", cid_col="candidate_entity_id"
     )
-    candidate_pairs_path = os.path.join(OUTPUT_DIR, "candidate_pairs.tsv")
+    candidate_pairs_path = os.path.join(FINAL_OUTPUT_DIR, "candidate_pairs.tsv")
     candidate_pairs_final.to_csv(candidate_pairs_path, sep="\t", index=False)
     log(f"  wrote {candidate_pairs_path} ({len(candidate_pairs_final):,} rows)")
 
@@ -175,7 +148,7 @@ def main():
     matching_results_final = matching_results_final.rename(
         columns={"candidate_entity_ids": "matched_entity_ids"}
     )
-    matching_results_path = os.path.join(OUTPUT_DIR, "matching_results.tsv")
+    matching_results_path = os.path.join(FINAL_OUTPUT_DIR, "matching_results.tsv")
     matching_results_final.to_csv(matching_results_path, sep="\t", index=False)
     n_with_matches = (matching_results_final["matched_entity_ids"] != "").sum()
     log(f"  wrote {matching_results_path} ({len(matching_results_final):,} rows, "
@@ -203,46 +176,26 @@ def main():
 
     log("")
     log("=== Step E: validating against utils/validate_submission.py ===")
-    utils_dir = os.path.join(audit.STUDENT_RESOURCE, "utils")
-    sys.path.insert(0, utils_dir)
-    import validate_submission as validator
-
-    temp_test_dir = os.path.join(PIPELINE_OUTPUT_DIR, "_temp_test_dir_for_validation")
-    os.makedirs(temp_test_dir, exist_ok=True)
-    temp_s1_path = os.path.join(temp_test_dir, "test_source1.tsv")
-    s1_df.to_csv(temp_s1_path, sep="\t", index=False)
-
-    errors, warnings = validator.validate(matching_results_path, candidate_pairs_path, temp_test_dir)
-    for w in warnings:
-        log(f"  WARNING: {w}")
-    if errors:
-        log(f"  FAIL -- {len(errors)} issue(s):")
-        for i, e in enumerate(errors, 1):
-            log(f"    {i}. {e}")
-        raise SystemExit(1)
-    log("  PASS -- both output files are structurally valid per the "
-        "challenge's own validator.")
-    os.remove(temp_s1_path)
-    os.rmdir(temp_test_dir)
+    run_official_validator(matching_results_path, candidate_pairs_path, s1_df)
 
     log("")
     log("=== Step F: real macro F_0.5 against actual ground truth ===")
-    gt_df = pd.read_csv(gt_path, sep="\t", dtype=str, keep_default_na=False)
-    gt_map = {}
-    for s1, matched_str in zip(gt_df["source1_entity_id"], gt_df["matched_entity_ids"]):
-        gt_map[s1] = set(matched_str.split(",")) if matched_str else set()
+    gt_map = load_sample_ground_truth(gt_path)
 
     real_f05 = macro_f05_real(matching_results_final, gt_map, required_ids)
-    log(f"REAL macro F_0.5 on the full 1,000-S1 sample "
+    n_total_s1 = len(required_ids)
+    n_held_out_pairs = model_report["n_held_out_scoring_pairs"]
+    honest_f05 = model_report["best_flat_threshold_macro_f0.5"]
+    log(f"REAL macro F_0.5 on the full {n_total_s1:,}-S1 sample "
         f"(train+calibration+held-out combined, since matching_results.tsv "
-        f"covers all 1,000 S1s): {real_f05:.4f}")
+        f"covers all {n_total_s1:,} S1s): {real_f05:.4f}")
     log("")
-    log("NOTE: this number is optimistic relative to a true test-set score, "
-        "since ~90% of these S1 entities' pairs were used to TRAIN the "
-        "model (only the held-out scoring fold from stage4 -- 100 S1 "
-        "entities -- was genuinely unseen). The held-out-only macro F_0.5 "
-        "reported in stage4_model_report.json (0.9481) is the more honest "
-        "estimate of real-world performance.")
+    log(f"NOTE: this number is optimistic relative to a true test-set score, "
+        f"since most of these S1 entities' pairs were used to TRAIN the "
+        f"model (only the held-out scoring fold from stage4 -- "
+        f"{n_held_out_pairs:,} pairs -- was genuinely unseen). The "
+        f"held-out-only macro F_0.5 reported in stage4_model_report.json "
+        f"({honest_f05}) is the more honest estimate of real-world performance.")
 
     summary = {
         "threshold_used": threshold,

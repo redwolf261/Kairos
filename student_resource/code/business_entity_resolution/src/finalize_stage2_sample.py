@@ -25,27 +25,19 @@ import sys
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import audit
 from finalize_candidate_pairs import finalize_candidate_pairs
-
-REPO_ROOT = os.path.abspath(os.path.join(audit.STUDENT_RESOURCE, ".."))
-BLOCKING_RESULTS_DIR = os.path.join(REPO_ROOT, "src", "blocking_results")
-SAMPLED_DATA_DIR = os.path.join(REPO_ROOT, "src", "sampled_data")
-
-PIPELINE_OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "pipeline_output")
-PIPELINE_OUTPUT_DIR = os.path.normpath(PIPELINE_OUTPUT_DIR)
-
-
-def log(msg):
-    print(msg, flush=True)
+from pipeline_common import (
+    PIPELINE_OUTPUT_DIR, BLOCKING_CANDIDATE_PAIRS_PATH, BLOCKING_PROVENANCE_PATH,
+    SAMPLE_SOURCE1_PATH, log, run_official_validator,
+)
 
 
 def main():
     os.makedirs(PIPELINE_OUTPUT_DIR, exist_ok=True)
 
-    candidate_pairs_path = os.path.join(BLOCKING_RESULTS_DIR, "experiment2_candidate_pairs.tsv")
-    provenance_path = os.path.join(BLOCKING_RESULTS_DIR, "experiment2_candidate_provenance.tsv")
-    s1_sample_path = os.path.join(SAMPLED_DATA_DIR, "sample_source1.tsv")
+    candidate_pairs_path = BLOCKING_CANDIDATE_PAIRS_PATH
+    provenance_path = BLOCKING_PROVENANCE_PATH
+    s1_sample_path = SAMPLE_SOURCE1_PATH
 
     for p in (candidate_pairs_path, provenance_path, s1_sample_path):
         if not os.path.isfile(p):
@@ -98,53 +90,20 @@ def main():
     # --- build-time verification: run the real challenge validator against
     # this file (as the --candidate arg) using the sample's own S1 list as
     # the "test set" -- proves the finalized output is structurally valid,
-    # not just documented as such.
+    # not just documented as such. We build an all-empty matching_results.tsv
+    # placeholder too, since the validator requires one -- this step only
+    # checks candidate_pairs_sample.tsv's OWN structural validity (required
+    # rows present, no dup ids, only S2-/S3- ids), not match quality.
     log("")
     log("=== Verifying against utils/validate_submission.py ===")
-    validate_against_sample(out_path, s1_sample_path)
-
-
-def validate_against_sample(candidate_path, s1_sample_path):
-    """Runs the challenge's own validator against the finalized file. We
-    build a matching_results.tsv placeholder too (all-empty), since the
-    validator requires one -- this step only checks candidate_pairs.tsv's
-    OWN structural validity (required rows present, no dup ids, only
-    S2-/S3- ids, no duplicate S1 rows), not match quality."""
-    utils_dir = os.path.join(audit.STUDENT_RESOURCE, "utils")
-    sys.path.insert(0, utils_dir)
-    import validate_submission as validator
-
-    s1_df = pd.read_csv(s1_sample_path, sep="\t", dtype=str, keep_default_na=False)
-    placeholder_matching = s1_df[["entity_id"]].rename(columns={"entity_id": "source1_entity_id"})
+    placeholder_matching = s1_sample[["entity_id"]].rename(columns={"entity_id": "source1_entity_id"})
     placeholder_matching["matched_entity_ids"] = ""
-    matching_path = os.path.join(PIPELINE_OUTPUT_DIR, "_placeholder_matching_for_validation.tsv")
-    placeholder_matching.to_csv(matching_path, sep="\t", index=False)
-
-    # the validator's required-S1 list comes from a directory containing
-    # test_source1.tsv -- point it at a temp dir with the sample's S1 file
-    # under that exact filename.
-    temp_test_dir = os.path.join(PIPELINE_OUTPUT_DIR, "_temp_test_dir_for_validation")
-    os.makedirs(temp_test_dir, exist_ok=True)
-    temp_s1_path = os.path.join(temp_test_dir, "test_source1.tsv")
-    s1_df.to_csv(temp_s1_path, sep="\t", index=False)
-
-    errors, warnings = validator.validate(matching_path, candidate_path, temp_test_dir)
-
-    for w in warnings:
-        log(f"WARNING: {w}")
-    if errors:
-        log(f"FAIL -- {len(errors)} issue(s):")
-        for i, e in enumerate(errors, 1):
-            log(f"  {i}. {e}")
-        raise SystemExit(1)
-
-    log("PASS -- candidate_pairs_sample.tsv is structurally valid per the "
-        "challenge's own validator.")
-
-    # cleanup temp files (not part of the real output)
-    os.remove(matching_path)
-    os.remove(temp_s1_path)
-    os.rmdir(temp_test_dir)
+    placeholder_matching_path = os.path.join(PIPELINE_OUTPUT_DIR, "_placeholder_matching_for_validation.tsv")
+    placeholder_matching.to_csv(placeholder_matching_path, sep="\t", index=False)
+    try:
+        run_official_validator(placeholder_matching_path, out_path, s1_sample)
+    finally:
+        os.remove(placeholder_matching_path)
 
 
 if __name__ == "__main__":

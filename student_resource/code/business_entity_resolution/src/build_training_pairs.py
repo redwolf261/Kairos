@@ -29,39 +29,23 @@ import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import audit
-
-REPO_ROOT = os.path.abspath(os.path.join(audit.STUDENT_RESOURCE, ".."))
-BLOCKING_RESULTS_DIR = os.path.join(REPO_ROOT, "src", "blocking_results")
-SAMPLED_DATA_DIR = os.path.join(REPO_ROOT, "src", "sampled_data")
-PIPELINE_OUTPUT_DIR = os.path.normpath(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "pipeline_output")
+from pipeline_common import (
+    PIPELINE_OUTPUT_DIR, TRAINING_PAIRS_COLUMNS,
+    BLOCKING_CANDIDATE_PAIRS_PATH, BLOCKING_PROVENANCE_PATH,
+    SAMPLE_SOURCE1_PATH, SAMPLE_SOURCE2_PATH, SAMPLE_SOURCE3_PATH, SAMPLE_GROUND_TRUTH_PATH,
+    load_sample_ground_truth, log,
 )
-
-
-def log(msg):
-    print(msg, flush=True)
-
-
-def load_sample_ground_truth(path):
-    """Same parsing logic as audit.load_ground_truth_map(), applied to the
-    sample's ground truth file directly (that function is hardcoded to the
-    full dataset's file path)."""
-    gt = {}
-    df = pd.read_csv(path, sep="\t", dtype=str, keep_default_na=False)
-    for s1, matched in zip(df["source1_entity_id"], df["matched_entity_ids"]):
-        gt[s1] = set(matched.split(",")) if matched else set()
-    return gt
 
 
 def main():
     os.makedirs(PIPELINE_OUTPUT_DIR, exist_ok=True)
 
-    pairs_path = os.path.join(BLOCKING_RESULTS_DIR, "experiment2_candidate_pairs.tsv")
-    provenance_path = os.path.join(BLOCKING_RESULTS_DIR, "experiment2_candidate_provenance.tsv")
-    s1_path = os.path.join(SAMPLED_DATA_DIR, "sample_source1.tsv")
-    s2_path = os.path.join(SAMPLED_DATA_DIR, "sample_source2.tsv")
-    s3_path = os.path.join(SAMPLED_DATA_DIR, "sample_source3.tsv")
-    gt_path = os.path.join(SAMPLED_DATA_DIR, "sample_ground_truth.tsv")
+    pairs_path = BLOCKING_CANDIDATE_PAIRS_PATH
+    provenance_path = BLOCKING_PROVENANCE_PATH
+    s1_path = SAMPLE_SOURCE1_PATH
+    s2_path = SAMPLE_SOURCE2_PATH
+    s3_path = SAMPLE_SOURCE3_PATH
+    gt_path = SAMPLE_GROUND_TRUTH_PATH
 
     log("Loading blocking output (pairs + provenance)...")
     pairs = pd.read_csv(pairs_path, sep="\t", dtype=str, keep_default_na=False)
@@ -130,16 +114,9 @@ def main():
         f"{100*recall_within_candidates:.2f}%, consistent with the "
         f"~99.65% reported in experiment2_blocking_comparison.tsv).")
 
-    out_columns = [
-        "s1_entity_id", "candidate_entity_id",
-        "s1_business_name", "s1_business_address", "s1_norm_name", "s1_norm_addr", "s1_country",
-        "s2_business_name", "s2_business_address", "s2_norm_name", "s2_norm_addr", "s2_country",
-        "blocking_methods", "num_blockers", "max_block_score",
-        "label",
-    ]
     out_path = os.path.join(PIPELINE_OUTPUT_DIR, "training_pairs.parquet")
-    training[out_columns].to_parquet(out_path, index=False)
-    log(f"Wrote {out_path} ({len(training):,} rows, {len(out_columns)} columns)")
+    training[TRAINING_PAIRS_COLUMNS].to_parquet(out_path, index=False)
+    log(f"Wrote {out_path} ({len(training):,} rows, {len(TRAINING_PAIRS_COLUMNS)} columns)")
 
 
 if __name__ == "__main__":

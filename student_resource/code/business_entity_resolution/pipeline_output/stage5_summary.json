@@ -1,10 +1,10 @@
 {
-  "threshold_used": 0.35,
+  "threshold_used": 0.75,
   "n_candidate_pairs_scored": 87865,
   "n_pairs_after_one_parent_constraint": 17602,
-  "n_final_matches": 3392,
+  "n_final_matches": 3422,
   "n_predicted_singletons": 66,
-  "real_macro_f05_full_sample_optimistic": 0.9823,
-  "held_out_macro_f05_honest_estimate": 0.9481,
+  "real_macro_f05_full_sample_optimistic": 0.9973,
+  "held_out_macro_f05_honest_estimate": 0.9836,
   "validator_result": "PASS"
 }

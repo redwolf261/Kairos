@@ -13,9 +13,10 @@ every pair belonging to a given S1 entity stays in the same fold.
 Calibration: LightGBM's raw predict_proba output is not necessarily a
 well-calibrated probability. Stage 5's threshold search and (later) Monte
 Carlo expected-F0.5 selection both need real probabilities, so this script
-applies post-hoc isotonic calibration (sklearn CalibratedClassifierCV,
-cv="prefit" against a held-out calibration fold) before writing the final
-probability file.
+applies post-hoc isotonic calibration (sklearn CalibratedClassifierCV
+wrapping a FrozenEstimator around the already-fitted model, then fit
+against a held-out calibration fold -- this is the modern replacement for
+the removed cv="prefit" API, see the inline comment where it's used).
 
 Input: pipeline_output/stage3_features.parquet
 Output:
@@ -43,59 +44,36 @@ from sklearn.frozen import FrozenEstimator
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import GroupKFold
 
-PIPELINE_OUTPUT_DIR = os.path.normpath(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "pipeline_output")
-)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from pipeline_common import PIPELINE_OUTPUT_DIR, NON_FEATURE_COLS, macro_f05_per_entity, log
 
-NON_FEATURE_COLS = {
-    "s1_entity_id", "candidate_entity_id",
-    "s1_business_name", "s1_business_address", "s1_norm_name", "s1_norm_addr", "s1_country",
-    "s2_business_name", "s2_business_address", "s2_norm_name", "s2_norm_addr", "s2_country",
-    "blocking_methods", "num_blockers", "label",
-}
-
-
-def log(msg):
-    print(msg, flush=True)
-
-
-def f_beta_score(precision, recall, beta=0.5):
-    if precision == 0 and recall == 0:
-        return 0.0
-    beta_sq = beta ** 2
-    denom = beta_sq * precision + recall
-    if denom == 0:
-        return 0.0
-    return (1 + beta_sq) * precision * recall / denom
+# Tunable knobs, overridable via env var without editing code -- same
+# pattern as audit.py's SAMPLE_ROWS/AUDIT_WORKERS/BLOCKING_SAMPLE_FRAC.
+N_SPLITS = int(os.environ.get("STAGE4_N_SPLITS", "5"))
+RANDOM_SEED = int(os.environ.get("STAGE4_RANDOM_SEED", "42"))
+N_ESTIMATORS = int(os.environ.get("STAGE4_N_ESTIMATORS", "300"))
+LEARNING_RATE = float(os.environ.get("STAGE4_LEARNING_RATE", "0.05"))
+NUM_LEAVES = int(os.environ.get("STAGE4_NUM_LEAVES", "31"))
+MIN_CHILD_SAMPLES = int(os.environ.get("STAGE4_MIN_CHILD_SAMPLES", "20"))
+THRESHOLD_SWEEP_START = float(os.environ.get("STAGE4_THRESHOLD_SWEEP_START", "0.1"))
+THRESHOLD_SWEEP_STOP = float(os.environ.get("STAGE4_THRESHOLD_SWEEP_STOP", "0.95"))
+THRESHOLD_SWEEP_STEP = float(os.environ.get("STAGE4_THRESHOLD_SWEEP_STEP", "0.05"))
 
 
 def macro_f05_at_threshold(df, threshold):
-    """Macro-averaged F_0.5 per S1 entity, matching the challenge's own
-    scoring definition (student_resource/README.md): computed per S1
-    entity (precision/recall over that entity's predicted vs true matches),
-    then averaged across ALL S1 entities -- singletons included, where a
-    correct empty prediction scores 1.0."""
-    per_entity_scores = []
+    """Wraps the shared macro_f05_per_entity() scorer: builds the
+    per-entity true/predicted id SETS this specific call needs (predicted
+    membership is itself derived from `threshold`, so it can't be
+    precomputed once and passed in) and delegates the actual F_0.5 math to
+    pipeline_common.py -- the same implementation stage5_decision_engine.py
+    uses for its real-ground-truth check, not a second copy of it."""
+    true_sets, predicted_sets = {}, {}
     for s1_id, group in df.groupby("s1_entity_id"):
-        true_positives_mask = group["label"] == 1
-        predicted_mask = group["calibrated_probability"] >= threshold
-
-        n_true = true_positives_mask.sum()
-        n_pred = predicted_mask.sum()
-        n_correct = (true_positives_mask & predicted_mask).sum()
-
-        if n_true == 0 and n_pred == 0:
-            per_entity_scores.append(1.0)  # correct singleton prediction
-            continue
-        if n_pred == 0:
-            per_entity_scores.append(0.0)  # missed all true matches
-            continue
-
-        precision = n_correct / n_pred if n_pred else 0.0
-        recall = n_correct / n_true if n_true else 0.0
-        per_entity_scores.append(f_beta_score(precision, recall, beta=0.5))
-
-    return float(np.mean(per_entity_scores))
+        true_sets[s1_id] = set(group.loc[group["label"] == 1, "candidate_entity_id"])
+        predicted_sets[s1_id] = set(
+            group.loc[group["calibrated_probability"] >= threshold, "candidate_entity_id"]
+        )
+    return macro_f05_per_entity(true_sets, predicted_sets, df["s1_entity_id"].unique())
 
 
 def main():
@@ -118,10 +96,9 @@ def main():
     y = df["label"].to_numpy(dtype=int)
     groups = df["s1_entity_id"].to_numpy()
 
-    n_splits = 5
-    log(f"GroupKFold({n_splits}) split by s1_entity_id (prevents an S1's "
+    log(f"GroupKFold({N_SPLITS}) split by s1_entity_id (prevents an S1's "
         f"pairs leaking across train/validation)...")
-    gkf = GroupKFold(n_splits=n_splits)
+    gkf = GroupKFold(n_splits=N_SPLITS)
     fold_indices = list(gkf.split(X, y, groups))
 
     # use the LAST fold as a held-out validation+calibration set; train on
@@ -134,7 +111,7 @@ def main():
     # the reported validation score either.
     val_groups = groups[val_idx]
     unique_val_groups = np.unique(val_groups)
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(RANDOM_SEED)
     rng.shuffle(unique_val_groups)
     half = len(unique_val_groups) // 2
     calib_groups = set(unique_val_groups[:half])
@@ -154,15 +131,15 @@ def main():
     log("Training LightGBM...")
     t0 = time.time()
     model = lgb.LGBMClassifier(
-        n_estimators=300,
-        learning_rate=0.05,
-        num_leaves=31,
-        min_child_samples=20,
+        n_estimators=N_ESTIMATORS,
+        learning_rate=LEARNING_RATE,
+        num_leaves=NUM_LEAVES,
+        min_child_samples=MIN_CHILD_SAMPLES,
         # positive class is ~4% of pairs -- let LightGBM weight accordingly
         # rather than resampling, since the sample is small enough that
         # resampling would throw away too much signal
         class_weight="balanced",
-        random_state=42,
+        random_state=RANDOM_SEED,
         n_jobs=-1,
         verbosity=-1,
     )
@@ -199,7 +176,7 @@ def main():
 
     log("")
     log("=== Threshold sweep (macro F_0.5, held-out scoring set) ===")
-    thresholds = np.arange(0.1, 0.95, 0.05)
+    thresholds = np.arange(THRESHOLD_SWEEP_START, THRESHOLD_SWEEP_STOP, THRESHOLD_SWEEP_STEP)
     threshold_results = []
     for t in thresholds:
         f05 = macro_f05_at_threshold(score_df, t)

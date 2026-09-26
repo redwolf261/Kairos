@@ -224,6 +224,19 @@ def _compute_features_chunk(rows_dict_list):
 
 
 def compute_features_parallel(pairs_df):
+    """IMPORTANT: chunks are dispatched to worker processes and MUST be
+    reassembled in the same order they were submitted, not the order they
+    finish in. Worker completion order is inherently non-deterministic
+    (depends on OS scheduling, chunk size variance, etc.), so iterating
+    futures via as_completed() and extending a flat list -- as an earlier
+    version of this function did -- silently pairs each row's original
+    data with a DIFFERENT row's computed features (chunk k's features land
+    at whatever position chunk k happened to finish in, not position k).
+    That bug was caught because it made two runs on the IDENTICAL input
+    produce different feature values, which should be impossible for a
+    pure function -- a strong signal to look for exactly this class of bug.
+    Fix: keep futures indexed by their submission order and reassemble in
+    that order, regardless of completion order."""
     log = audit.log
     n = len(pairs_df)
     log(f"[experiments] computing similarity features for {n:,} pairs "
@@ -235,11 +248,15 @@ def compute_features_parallel(pairs_df):
     chunk_size = max(1, -(-len(records) // n_workers))  # ceil division
     chunks = [records[i:i + chunk_size] for i in range(0, len(records), chunk_size)]
 
-    all_features = []
+    results_by_chunk_index = {}
     with audit.make_executor() as ex:
-        futures = [ex.submit(_compute_features_chunk, c) for c in chunks]
-        for fut in audit.as_completed(futures):
-            all_features.extend(fut.result())
+        future_to_index = {ex.submit(_compute_features_chunk, c): i for i, c in enumerate(chunks)}
+        for fut in audit.as_completed(future_to_index):
+            results_by_chunk_index[future_to_index[fut]] = fut.result()
+
+    all_features = []
+    for i in range(len(chunks)):
+        all_features.extend(results_by_chunk_index[i])
 
     feat_df = pd.DataFrame(all_features)
     log(f"[experiments] features computed in {round(time.time()-t0,1)}s")

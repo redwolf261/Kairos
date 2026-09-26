@@ -31,16 +31,8 @@ import sys
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import audit
 from experiments import compute_features_parallel
-
-PIPELINE_OUTPUT_DIR = os.path.normpath(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "pipeline_output")
-)
-
-
-def log(msg):
-    print(msg, flush=True)
+from pipeline_common import PIPELINE_OUTPUT_DIR, NON_FEATURE_COLS, log
 
 
 def add_cheap_extra_features(df):
@@ -84,15 +76,7 @@ def main():
         if n_nan:
             raise ValueError(f"{n_nan} NaN values found in required column '{col}'")
 
-    feature_cols = [
-        c for c in df_final.columns
-        if c not in (
-            "s1_entity_id", "candidate_entity_id",
-            "s1_business_name", "s1_business_address", "s1_norm_name", "s1_norm_addr", "s1_country",
-            "s2_business_name", "s2_business_address", "s2_norm_name", "s2_norm_addr", "s2_country",
-            "blocking_methods", "num_blockers", "label",
-        )
-    ]
+    feature_cols = [c for c in df_final.columns if c not in NON_FEATURE_COLS]
     n_nan_features = df_final[feature_cols].isna().sum()
     if n_nan_features.sum():
         log(f"WARNING: NaN found in feature columns: "
