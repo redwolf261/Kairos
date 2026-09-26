@@ -15,16 +15,20 @@ to match whatever gets agreed. The smoke-test harness (smoke_test.py) checks
 real stage output against whatever is defined here, so this file is the
 single source of truth the harness enforces.
 
-IMPORTANT MISMATCH ALREADY FOUND: src/blocking.ipynb currently produces
-candidate pairs as a FLAT table with columns `s1_entity_id`,
-`candidate_entity_id` (one row per pair) -- but the challenge's required
-final format for candidate_pairs.tsv is `source1_entity_id`,
-`candidate_entity_ids` (one row per S1 entity, candidates comma-joined into
-a single list). These are NOT the same shape. Someone needs to add a
-"fuse/finalize" step that groups the flat pair table by S1 id and joins the
-candidate ids into a comma-separated string before it becomes
-candidate_pairs.tsv. Flagging this now so it doesn't surface as a surprise
-at hour 20 when packaging the final submission.
+MISMATCH FOUND AND FIXED: src/blocking.ipynb currently produces candidate
+pairs as a FLAT table with columns `s1_entity_id`, `candidate_entity_id`
+(one row per pair) -- but the challenge's required final format for
+candidate_pairs.tsv is `source1_entity_id`, `candidate_entity_ids` (one row
+per S1 entity, candidates comma-joined into a single list). These are NOT
+the same shape.
+
+Fixed in finalize_candidate_pairs.py (this directory): call
+`finalize_candidate_pairs(flat_pairs_df, required_s1_ids)` to convert the
+flat working format into the exact required shape, or run it as a CLI on an
+existing flat .tsv/.parquet file. It also enforces the S2-/S3-prefix rule
+and de-dupes candidate ids, so output passes the challenge's own
+utils/validate_submission.py by construction -- verified against real
+test-set data and the actual validator (PASS).
 """
 
 # ---------------------------------------------------------------------------

@@ -181,10 +181,8 @@ def check_stage2_flat(path):
         log(f"This matches the FLAT intermediate format ({intermediate}) "
             f"seen in src/blocking.ipynb -- one row per (S1, candidate) pair.")
         log("REMINDER: this is NOT the final candidate_pairs.tsv shape. "
-            "Before packaging, this needs the fuse/finalize step described "
-            "in schema_contracts.py: group by s1 id, comma-join candidate "
-            "ids, reindex against every test_source1 id, rename columns to "
-            f"{final}.")
+            "Run it through finalize_candidate_pairs.py (same directory) to "
+            f"convert to the required {final} shape before packaging.")
         n_s1 = df[intermediate[0]].nunique()
         n_pairs = len(df)
         log(f"Distinct S1 entities represented: {n_s1:,}. "
