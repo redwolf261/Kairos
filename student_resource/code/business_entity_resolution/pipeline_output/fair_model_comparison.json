@@ -1,0 +1,391 @@
+{
+  "note": "All models trained/scored on IDENTICAL data (stage3_features.parquet, real blocking output, no ground-truth injection) and IDENTICAL GroupKFold-by-s1_entity_id split. macro_f05_per_entity is the challenge's actual scoring metric; per_pair_fbeta05 is what model_evaluation.ipynb reports (NOT the same metric, kept here for direct comparison to the teammate's own reported numbers).",
+  "lightgbm_reference_macro_f05": 0.9836,
+  "models": {
+    "logistic_regression": {
+      "train_seconds": 0.2,
+      "per_pair_fbeta05_at_threshold_0.5": 0.9112,
+      "per_pair_auc": 0.9999,
+      "best_threshold": 0.9,
+      "macro_f05_per_entity": 0.9719,
+      "threshold_sweep": [
+        {
+          "threshold": 0.1,
+          "macro_f0.5": 0.7939194130506314
+        },
+        {
+          "threshold": 0.15,
+          "macro_f0.5": 0.825390294223952
+        },
+        {
+          "threshold": 0.2,
+          "macro_f0.5": 0.8407821917814947
+        },
+        {
+          "threshold": 0.25,
+          "macro_f0.5": 0.8569101622545758
+        },
+        {
+          "threshold": 0.3,
+          "macro_f0.5": 0.8729175003490284
+        },
+        {
+          "threshold": 0.35,
+          "macro_f0.5": 0.8900523957394323
+        },
+        {
+          "threshold": 0.4,
+          "macro_f0.5": 0.9004793251318789
+        },
+        {
+          "threshold": 0.45,
+          "macro_f0.5": 0.9128581107620641
+        },
+        {
+          "threshold": 0.5,
+          "macro_f0.5": 0.918675552918179
+        },
+        {
+          "threshold": 0.55,
+          "macro_f0.5": 0.9243543909883215
+        },
+        {
+          "threshold": 0.6,
+          "macro_f0.5": 0.9243543909883215
+        },
+        {
+          "threshold": 0.65,
+          "macro_f0.5": 0.9334995578269869
+        },
+        {
+          "threshold": 0.7,
+          "macro_f0.5": 0.941473168323817
+        },
+        {
+          "threshold": 0.75,
+          "macro_f0.5": 0.9436597399221535
+        },
+        {
+          "threshold": 0.8,
+          "macro_f0.5": 0.9570428550800468
+        },
+        {
+          "threshold": 0.85,
+          "macro_f0.5": 0.9642811029432947
+        },
+        {
+          "threshold": 0.9,
+          "macro_f0.5": 0.9719290855506426
+        }
+      ]
+    },
+    "random_forest": {
+      "train_seconds": 2.8,
+      "per_pair_fbeta05_at_threshold_0.5": 0.9707,
+      "per_pair_auc": 0.9999,
+      "best_threshold": 0.7,
+      "macro_f05_per_entity": 0.9786,
+      "threshold_sweep": [
+        {
+          "threshold": 0.1,
+          "macro_f0.5": 0.8651287089491052
+        },
+        {
+          "threshold": 0.15,
+          "macro_f0.5": 0.8946860223401969
+        },
+        {
+          "threshold": 0.2,
+          "macro_f0.5": 0.9288884255811796
+        },
+        {
+          "threshold": 0.25,
+          "macro_f0.5": 0.9479773242985613
+        },
+        {
+          "threshold": 0.3,
+          "macro_f0.5": 0.9579476486601901
+        },
+        {
+          "threshold": 0.35,
+          "macro_f0.5": 0.96639462817795
+        },
+        {
+          "threshold": 0.4,
+          "macro_f0.5": 0.9659184377017594
+        },
+        {
+          "threshold": 0.45,
+          "macro_f0.5": 0.9675851043684262
+        },
+        {
+          "threshold": 0.5,
+          "macro_f0.5": 0.967520328458062
+        },
+        {
+          "threshold": 0.55,
+          "macro_f0.5": 0.9675644999728218
+        },
+        {
+          "threshold": 0.6,
+          "macro_f0.5": 0.9726806411415945
+        },
+        {
+          "threshold": 0.65,
+          "macro_f0.5": 0.975177033637987
+        },
+        {
+          "threshold": 0.7,
+          "macro_f0.5": 0.9786410859255688
+        },
+        {
+          "threshold": 0.75,
+          "macro_f0.5": 0.9776314705409532
+        },
+        {
+          "threshold": 0.8,
+          "macro_f0.5": 0.9634373313468142
+        },
+        {
+          "threshold": 0.85,
+          "macro_f0.5": 0.9656694742039569
+        },
+        {
+          "threshold": 0.9,
+          "macro_f0.5": 0.9631364516709344
+        }
+      ]
+    },
+    "extra_trees": {
+      "train_seconds": 1.8,
+      "per_pair_fbeta05_at_threshold_0.5": 0.9744,
+      "per_pair_auc": 0.9999,
+      "best_threshold": 0.5,
+      "macro_f05_per_entity": 0.976,
+      "threshold_sweep": [
+        {
+          "threshold": 0.1,
+          "macro_f0.5": 0.8409991683804506
+        },
+        {
+          "threshold": 0.15,
+          "macro_f0.5": 0.8886857884153367
+        },
+        {
+          "threshold": 0.2,
+          "macro_f0.5": 0.9141393594934408
+        },
+        {
+          "threshold": 0.25,
+          "macro_f0.5": 0.9524843256658169
+        },
+        {
+          "threshold": 0.3,
+          "macro_f0.5": 0.9640001616193967
+        },
+        {
+          "threshold": 0.35,
+          "macro_f0.5": 0.9649289541890562
+        },
+        {
+          "threshold": 0.4,
+          "macro_f0.5": 0.9720563479940816
+        },
+        {
+          "threshold": 0.45,
+          "macro_f0.5": 0.9715801575178911
+        },
+        {
+          "threshold": 0.5,
+          "macro_f0.5": 0.9760246019623355
+        },
+        {
+          "threshold": 0.55,
+          "macro_f0.5": 0.9679924054007272
+        },
+        {
+          "threshold": 0.6,
+          "macro_f0.5": 0.9698888577615759
+        },
+        {
+          "threshold": 0.65,
+          "macro_f0.5": 0.9690280519007699
+        },
+        {
+          "threshold": 0.7,
+          "macro_f0.5": 0.9680184365161546
+        },
+        {
+          "threshold": 0.75,
+          "macro_f0.5": 0.9649551884896712
+        },
+        {
+          "threshold": 0.8,
+          "macro_f0.5": 0.9615623313468141
+        },
+        {
+          "threshold": 0.85,
+          "macro_f0.5": 0.9637191940919121
+        },
+        {
+          "threshold": 0.9,
+          "macro_f0.5": 0.9662556160033341
+        }
+      ]
+    },
+    "hist_gradient_boosting": {
+      "train_seconds": 0.8,
+      "per_pair_fbeta05_at_threshold_0.5": 0.9813,
+      "per_pair_auc": 0.9999,
+      "best_threshold": 0.8,
+      "macro_f05_per_entity": 0.9853,
+      "threshold_sweep": [
+        {
+          "threshold": 0.1,
+          "macro_f0.5": 0.9692171610372475
+        },
+        {
+          "threshold": 0.15,
+          "macro_f0.5": 0.9692171610372475
+        },
+        {
+          "threshold": 0.2,
+          "macro_f0.5": 0.9683080701281566
+        },
+        {
+          "threshold": 0.25,
+          "macro_f0.5": 0.9687466666193846
+        },
+        {
+          "threshold": 0.3,
+          "macro_f0.5": 0.9683620512347693
+        },
+        {
+          "threshold": 0.35,
+          "macro_f0.5": 0.9719456898184079
+        },
+        {
+          "threshold": 0.4,
+          "macro_f0.5": 0.9731221604066431
+        },
+        {
+          "threshold": 0.45,
+          "macro_f0.5": 0.9731221604066431
+        },
+        {
+          "threshold": 0.5,
+          "macro_f0.5": 0.975269388178871
+        },
+        {
+          "threshold": 0.55,
+          "macro_f0.5": 0.975269388178871
+        },
+        {
+          "threshold": 0.6,
+          "macro_f0.5": 0.9790888326233155
+        },
+        {
+          "threshold": 0.65,
+          "macro_f0.5": 0.9819459754804583
+        },
+        {
+          "threshold": 0.7,
+          "macro_f0.5": 0.9813209754804582
+        },
+        {
+          "threshold": 0.75,
+          "macro_f0.5": 0.9808447850042676
+        },
+        {
+          "threshold": 0.8,
+          "macro_f0.5": 0.9852892294487122
+        },
+        {
+          "threshold": 0.85,
+          "macro_f0.5": 0.9752892294487122
+        },
+        {
+          "threshold": 0.9,
+          "macro_f0.5": 0.9746642294487122
+        }
+      ]
+    },
+    "rbf_svm": {
+      "train_seconds": 33.2,
+      "per_pair_fbeta05_at_threshold_0.5": 0.9628,
+      "per_pair_auc": 0.9994,
+      "best_threshold": 0.9,
+      "macro_f05_per_entity": 0.9604,
+      "threshold_sweep": [
+        {
+          "threshold": 0.1,
+          "macro_f0.5": 0.9415559718815163
+        },
+        {
+          "threshold": 0.15,
+          "macro_f0.5": 0.9470485494793571
+        },
+        {
+          "threshold": 0.2,
+          "macro_f0.5": 0.9534164814536732
+        },
+        {
+          "threshold": 0.25,
+          "macro_f0.5": 0.9506944803725389
+        },
+        {
+          "threshold": 0.3,
+          "macro_f0.5": 0.9506944803725389
+        },
+        {
+          "threshold": 0.35,
+          "macro_f0.5": 0.9551526847069043
+        },
+        {
+          "threshold": 0.4,
+          "macro_f0.5": 0.9580098275640472
+        },
+        {
+          "threshold": 0.45,
+          "macro_f0.5": 0.9580098275640472
+        },
+        {
+          "threshold": 0.5,
+          "macro_f0.5": 0.9571795467337664
+        },
+        {
+          "threshold": 0.55,
+          "macro_f0.5": 0.9566550712092908
+        },
+        {
+          "threshold": 0.6,
+          "macro_f0.5": 0.9575838637789502
+        },
+        {
+          "threshold": 0.65,
+          "macro_f0.5": 0.9575838637789502
+        },
+        {
+          "threshold": 0.7,
+          "macro_f0.5": 0.9575838637789502
+        },
+        {
+          "threshold": 0.75,
+          "macro_f0.5": 0.9586682654883519
+        },
+        {
+          "threshold": 0.8,
+          "macro_f0.5": 0.957759174579261
+        },
+        {
+          "threshold": 0.85,
+          "macro_f0.5": 0.9598784433393966
+        },
+        {
+          "threshold": 0.9,
+          "macro_f0.5": 0.9604439195298728
+        }
+      ]
+    }
+  }
+}
