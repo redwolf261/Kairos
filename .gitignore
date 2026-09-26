@@ -32,3 +32,6 @@ Thumbs.db
 
 # === Empty stray directory from an early misrun (kept out just in case it repopulates) ===
 /audit/
+
+
+.venv/
