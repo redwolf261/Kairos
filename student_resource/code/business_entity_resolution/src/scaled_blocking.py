@@ -779,28 +779,122 @@ def retrieve_name_fuzzy_candidates_batch(s1_batch_df, structures, query_chunk_si
 # overhead that made the naive port impractical.
 # ---------------------------------------------------------------------------
 
+def _address_name_token_chunk(rows_dict_list, lite_structures):
+    """Worker: run the address + name_token blockers for a chunk of S1
+    rows. Split out of run_blocking()'s loop under time pressure near the
+    challenge deadline: at full test-set scale (1.73M S1 entities) the
+    original single-process `.iterrows()` loop measured ~225 rows/sec
+    (mostly Python/pandas per-row overhead, not the actual dict-lookup
+    work, which is cheap) -- ~2.1 HOURS just for this one blocker step,
+    exceeding the entire remaining time budget. The lookup logic itself is
+    UNCHANGED (same retrieve_address_candidates/retrieve_name_token_candidates
+    calls, same thresholds, same top-k) -- only the execution strategy
+    changes, from one process iterating rows to N processes each iterating
+    a chunk, mirroring the exact pattern prepare_pool_fields_parallel()
+    already uses for the same class of problem.
+
+    Takes `lite_structures` (only the 4 keys these two blockers actually
+    read), NOT the full structures dict -- the full dict also carries
+    country_name_choices and tfidf_by_country (potentially GB-scale: fitted
+    vectorizers, sparse matrices, per-entity name text for the whole pool),
+    which ProcessPoolExecutor would otherwise re-pickle and re-send to EVERY
+    chunk's worker, multiplying that cost by the chunk count -- exactly the
+    N-way duplication pattern that caused earlier memory crashes tonight."""
+    results = []
+    for row in rows_dict_list:
+        results.extend(retrieve_address_candidates(row, lite_structures))
+        results.extend(retrieve_name_token_candidates(row, lite_structures))
+    return results
+
+
+def run_address_name_token_blockers_parallel(s1_sample, structures):
+    """PERFORMANCE FIX (post-time-pressure-discovery): see
+    _address_name_token_chunk()'s docstring.
+
+    MEMORY FIX (correction to this function's own earlier assumption): a
+    prior version of this docstring claimed this step is "NOT memory-heavy
+    the way pool-prep is" and used the full audit.MAX_WORKERS (16) --
+    WRONG, verified by a real near-crash at full test-set scale (free RAM
+    hit ~400MB). lite_structures (source_lookup + 3 index dicts, built
+    from a ~10M-row pool) is NOT small at that scale, and ProcessPoolExecutor
+    pickles a full copy to EACH worker process at spawn -- 16 copies of a
+    genuinely large dict is real duplicated memory, the same N-way pattern
+    already fixed once for pool-prep, just not recognized here the first
+    time this function was written. Capped the same way, via
+    BLOCKING_ADDR_NAME_TOKEN_WORKERS (default 6, same conservative default
+    as pool-prep)."""
+    n_workers = min(audit.MAX_WORKERS, int(os.environ.get("BLOCKING_ADDR_NAME_TOKEN_WORKERS", "6")))
+    log(f"Running address + name_token blockers (parallel across "
+        f"{n_workers} workers)...")
+    t0 = time.time()
+
+    # Only what these two blockers actually read -- see
+    # _address_name_token_chunk()'s docstring for why this matters.
+    lite_structures = {
+        "source_lookup": structures["source_lookup"],
+        "address_index": structures["address_index"],
+        "name_token_index": structures["name_token_index"],
+        "name_core_token_index": structures["name_core_token_index"],
+    }
+
+    records = s1_sample.to_dict("records")
+    chunk_size = max(1, -(-len(records) // (n_workers * 4)))  # more, smaller chunks for progress visibility
+    n_chunks = -(-len(records) // chunk_size)
+
+    all_rows = []
+    with ProcessPoolExecutor(max_workers=n_workers) as ex:
+        future_to_index = {}
+        for i in range(n_chunks):
+            chunk = records[i * chunk_size:(i + 1) * chunk_size]
+            future_to_index[ex.submit(_address_name_token_chunk, chunk, lite_structures)] = i
+        n_done = 0
+        for fut in audit.as_completed(future_to_index):
+            all_rows.extend(fut.result())
+            n_done += 1
+            if n_done == 1 or n_done % max(1, n_chunks // 20) == 0 or n_done == n_chunks:
+                elapsed = time.time() - t0
+                rate = (n_done * chunk_size) / elapsed if elapsed else 0
+                log(f"  chunk {n_done}/{n_chunks} done ({elapsed:.1f}s elapsed, "
+                    f"~{rate:.0f} S1 rows/s)")
+
+    log(f"  done in {round(time.time()-t0,1)}s")
+    return all_rows
+
+
 def run_blocking(s1_sample, structures):
-    s1_sample = s1_sample.copy()
-    s1_sample["address_tokens"] = s1_sample["business_address"].apply(get_informative_address_tokens)
-    s1_sample["name_tokens"] = s1_sample["business_name"].apply(get_name_tokens)
-    s1_sample["name_core_tokens"] = s1_sample["business_name"].apply(get_name_core_tokens)
-    s1_sample["name_char_text"] = s1_sample["business_name"].apply(get_name_char_text)
-    s1_sample["country_norm"] = s1_sample["country"].apply(lambda x: normalize_text(x, transliterate=True))
+    # TIME-PRESSURE FIX: at full test-set scale (1.73M S1 rows), preparing
+    # these fields via plain .apply() in one process is itself slow enough
+    # to matter (same class of problem prepare_pool_fields_parallel()
+    # already solved for the POOL side) -- reuse that exact function for
+    # the S1 side too, rather than duplicating a second, un-parallelized
+    # version of the same tokenization work.
+    if len(s1_sample) > 50_000:
+        s1_sample = prepare_pool_fields_parallel(s1_sample)
+    else:
+        s1_sample = s1_sample.copy()
+        s1_sample["address_tokens"] = s1_sample["business_address"].apply(get_informative_address_tokens)
+        s1_sample["name_tokens"] = s1_sample["business_name"].apply(get_name_tokens)
+        s1_sample["name_core_tokens"] = s1_sample["business_name"].apply(get_name_core_tokens)
+        s1_sample["name_char_text"] = s1_sample["business_name"].apply(get_name_char_text)
+        s1_sample["country_norm"] = s1_sample["country"].apply(lambda x: normalize_text(x, transliterate=True))
 
     all_rows = []
     total = len(s1_sample)
     t0 = time.time()
 
-    log("Running address + name_token blockers (per-row dict lookups)...")
-    for i, (_, row) in enumerate(s1_sample.iterrows(), start=1):
-        if i == 1 or i % LOG_EVERY == 0 or i == total:
-            elapsed = time.time() - t0
-            rate = i / elapsed if elapsed else 0
-            eta = (total - i) / rate if rate else 0
-            log(f"  Processing S1 {i:,}/{total:,} ({rate:.1f}/s, ETA {eta/60:.1f} min)")
-        all_rows.extend(retrieve_address_candidates(row, structures))
-        all_rows.extend(retrieve_name_token_candidates(row, structures))
-    log(f"  done in {round(time.time()-t0,1)}s")
+    if total > 50_000:
+        all_rows.extend(run_address_name_token_blockers_parallel(s1_sample, structures))
+    else:
+        log("Running address + name_token blockers (per-row dict lookups)...")
+        for i, (_, row) in enumerate(s1_sample.iterrows(), start=1):
+            if i == 1 or i % LOG_EVERY == 0 or i == total:
+                elapsed = time.time() - t0
+                rate = i / elapsed if elapsed else 0
+                eta = (total - i) / rate if rate else 0
+                log(f"  Processing S1 {i:,}/{total:,} ({rate:.1f}/s, ETA {eta/60:.1f} min)")
+            all_rows.extend(retrieve_address_candidates(row, structures))
+            all_rows.extend(retrieve_name_token_candidates(row, structures))
+        log(f"  done in {round(time.time()-t0,1)}s")
 
     log("Running name_char_tfidf blocker (batched per country)...")
     t1 = time.time()
