@@ -1,0 +1,168 @@
+{
+  "skipped": false,
+  "countries_present": [
+    "India",
+    "US"
+  ],
+  "results": [
+    {
+      "train_country": "US",
+      "test_country": "India",
+      "n_train_pairs": 43202,
+      "n_test_pairs": 44663,
+      "cross_country_auc": 0.9989,
+      "best_threshold": 0.9,
+      "best_macro_f05": 0.9144,
+      "threshold_sweep": [
+        {
+          "threshold": 0.1,
+          "macro_f0.5": 0.8681677763030873
+        },
+        {
+          "threshold": 0.15,
+          "macro_f0.5": 0.8734086158542527
+        },
+        {
+          "threshold": 0.2,
+          "macro_f0.5": 0.8779045063112102
+        },
+        {
+          "threshold": 0.25,
+          "macro_f0.5": 0.8794150296501161
+        },
+        {
+          "threshold": 0.3,
+          "macro_f0.5": 0.8810934981442562
+        },
+        {
+          "threshold": 0.35,
+          "macro_f0.5": 0.8852002649000429
+        },
+        {
+          "threshold": 0.4,
+          "macro_f0.5": 0.8894954465154105
+        },
+        {
+          "threshold": 0.45,
+          "macro_f0.5": 0.892596919099654
+        },
+        {
+          "threshold": 0.5,
+          "macro_f0.5": 0.8934605582371895
+        },
+        {
+          "threshold": 0.55,
+          "macro_f0.5": 0.8939367930830258
+        },
+        {
+          "threshold": 0.6,
+          "macro_f0.5": 0.8956209423143812
+        },
+        {
+          "threshold": 0.65,
+          "macro_f0.5": 0.8976860053372915
+        },
+        {
+          "threshold": 0.7,
+          "macro_f0.5": 0.8997605836570834
+        },
+        {
+          "threshold": 0.75,
+          "macro_f0.5": 0.9029588335382198
+        },
+        {
+          "threshold": 0.8,
+          "macro_f0.5": 0.907175346848387
+        },
+        {
+          "threshold": 0.85,
+          "macro_f0.5": 0.9106243371557629
+        },
+        {
+          "threshold": 0.9,
+          "macro_f0.5": 0.9143790694334057
+        }
+      ]
+    },
+    {
+      "train_country": "India",
+      "test_country": "US",
+      "n_train_pairs": 44663,
+      "n_test_pairs": 43202,
+      "cross_country_auc": 0.9998,
+      "best_threshold": 0.85,
+      "best_macro_f05": 0.9822,
+      "threshold_sweep": [
+        {
+          "threshold": 0.1,
+          "macro_f0.5": 0.9759793060134648
+        },
+        {
+          "threshold": 0.15,
+          "macro_f0.5": 0.9770136043114446
+        },
+        {
+          "threshold": 0.2,
+          "macro_f0.5": 0.9774236420349153
+        },
+        {
+          "threshold": 0.25,
+          "macro_f0.5": 0.9770110399104776
+        },
+        {
+          "threshold": 0.3,
+          "macro_f0.5": 0.9770110399104776
+        },
+        {
+          "threshold": 0.35,
+          "macro_f0.5": 0.976774261223878
+        },
+        {
+          "threshold": 0.4,
+          "macro_f0.5": 0.976774261223878
+        },
+        {
+          "threshold": 0.45,
+          "macro_f0.5": 0.9771830426060768
+        },
+        {
+          "threshold": 0.5,
+          "macro_f0.5": 0.9773956547589876
+        },
+        {
+          "threshold": 0.55,
+          "macro_f0.5": 0.9776658160660696
+        },
+        {
+          "threshold": 0.6,
+          "macro_f0.5": 0.9781396374354132
+        },
+        {
+          "threshold": 0.65,
+          "macro_f0.5": 0.9787049132970017
+        },
+        {
+          "threshold": 0.7,
+          "macro_f0.5": 0.9787049132970017
+        },
+        {
+          "threshold": 0.75,
+          "macro_f0.5": 0.9795852053437442
+        },
+        {
+          "threshold": 0.8,
+          "macro_f0.5": 0.9814410057070071
+        },
+        {
+          "threshold": 0.85,
+          "macro_f0.5": 0.9821745198613204
+        },
+        {
+          "threshold": 0.9,
+          "macro_f0.5": 0.9820685098868895
+        }
+      ]
+    }
+  ],
+  "note": "This is the ONLY honest proxy for France performance in the real submission, since training data has zero French rows. If cross-country macro F0.5 here is close to the same-country GroupKFold baseline (see stage4_model_report.json), that's evidence the model generalizes on genuine name/address similarity signal rather than country-specific artifacts."
+}
