@@ -163,6 +163,12 @@ MAX_INDEX_BUCKET_SIZE = int(os.environ.get("BLOCKING_MAX_BUCKET_SIZE", "5000"))
 # even against the largest country shard in this dataset.
 NAME_FUZZY_QUERY_CHUNK_SIZE = int(os.environ.get("BLOCKING_FUZZY_QUERY_CHUNK_SIZE", "500"))
 
+# NOT in the original notebook -- bounds sp_matmul_topn()'s query-side
+# memory the same way NAME_FUZZY_QUERY_CHUNK_SIZE bounds cdist's (see
+# retrieve_name_char_candidates_batch()'s docstring: safe at 1,000 S1
+# queries, measured to push the process to ~14GB resident at 10,000).
+NAME_CHAR_QUERY_CHUNK_SIZE = int(os.environ.get("BLOCKING_NAME_CHAR_QUERY_CHUNK_SIZE", "1000"))
+
 WEAK_ADDRESS_TOKENS = {
     "road", "rd", "street", "st", "avenue", "ave", "lane", "ln", "drive", "dr",
     "highway", "hwy", "boulevard", "blvd", "way", "place", "pl", "parkway", "pkwy",
@@ -177,13 +183,39 @@ LEGAL_SUFFIXES = {
 
 # ---------------------------------------------------------------------------
 # Normalization -- exact port of the notebook's normalize_text/tokenize/
-# transliteration helper chain (uses anyascii, NOT audit.py's regex-based
-# normalization -- these are deliberately different normalization schemes,
-# see schema_contracts.py's note on the two approaches coexisting)
+# transliteration helper chain (uses anyascii for transliteration, NOT
+# audit.py's normalize_series() -- these are deliberately different
+# normalization PIPELINES, see schema_contracts.py's note on the two
+# approaches coexisting). However, the actual "[^\w\s] -> space" regex
+# step below uses the SAME third-party `regex` module (not stdlib `re`)
+# that audit.py's NON_WORD_KEEP_MARKS_RE already established is required
+# for correctness -- see the CORRECTNESS FIX note on normalize_text below.
 # ---------------------------------------------------------------------------
 
-import re
+import regex
 import unicodedata
+
+# CORRECTNESS FIX: stdlib `re`'s `\w` does NOT match Unicode combining
+# marks (categories Mc/Mn) -- confirmed by a real corruption bug found
+# earlier in this project (audit.py, see NON_WORD_KEEP_MARKS_RE) and
+# re-confirmed here by direct test: normalize_text() on the Devanagari
+# string "रिलायंस इंडस्ट्रीज" ("Reliance Industries") with stdlib re
+# produces "र ल य स इ डस ट र ज" -- every combining vowel sign (matra)
+# stripped, shattering the word into meaningless single/double-character
+# fragments BEFORE transliteration or tokenization ever sees it intact
+# (transliterated_tokens() calls normalize_text(transliterate=False) on
+# the RAW text first). This corrupted get_name_tokens/get_name_core_tokens/
+# get_informative_address_tokens for any India-country record with native
+# Devanagari script in its name or address, silently degrading the
+# name_token and address blockers' recall for that subset of records --
+# present in this file since it was written, only caught by a thorough
+# re-read of every normalization function against known Unicode pitfalls,
+# not by any test run (the corrupted tokens still "worked" in the sense of
+# not crashing, they just matched far less precisely). Using the `regex`
+# module (already a project dependency, see requirements.txt/audit.py)
+# instead of stdlib `re` for this specific substitution fixes it -- same
+# API, Unicode-correct \w.
+NON_WORD_KEEP_MARKS_RE = regex.compile(r"[^\w\s]", flags=regex.UNICODE)
 
 
 def is_latin_char(ch):
@@ -212,8 +244,8 @@ def normalize_text(text, transliterate=False):
     text = text.lower().strip()
     if transliterate:
         text = transliterate_text(text)
-    text = re.sub(r"[^\w\s]", " ", text, flags=re.UNICODE)
-    text = re.sub(r"\s+", " ", text).strip()
+    text = NON_WORD_KEEP_MARKS_RE.sub(" ", text)
+    text = regex.sub(r"\s+", " ", text).strip()
     return text
 
 
@@ -241,7 +273,7 @@ def get_informative_address_tokens(address):
             continue
         if token in WEAK_ADDRESS_TOKENS:
             continue
-        if not re.search(r"[a-z0-9]", token):
+        if not regex.search(r"[a-z0-9]", token):
             continue
         informative.add(token)
     return informative
@@ -587,7 +619,21 @@ def retrieve_name_char_candidates_batch(s1_batch_df, structures):
     without ever forming the full dense matrix.
 
     Returns a list of result dicts across ALL rows in s1_batch_df (which
-    must all share the same country_norm)."""
+    must all share the same country_norm).
+
+    MEMORY FIX (post-OOM-crash #3): this function used to hand ALL of a
+    country's S1 queries to a SINGLE sp_matmul_topn() call. That was
+    verified safe at 1,000 S1 entities (243.7s, no memory issue) but at
+    10,000 S1 entities (10x the query rows, same ~6.2M-candidate US
+    matrix) the query-side sparse matrix and sp_matmul_topn's internal
+    working memory grew enough to push the process to ~14GB resident with
+    system free memory down to ~2.9GB -- caught and killed before it
+    crashed the machine a third time. Root cause: fitting was already
+    scale-tested (deviation 2 above) but QUERYING at S1-count scale never
+    was. Fixed the same way the fuzzy blocker already handles this
+    (NAME_FUZZY_QUERY_CHUNK_SIZE): chunk the queries, so peak memory is
+    bounded by chunk size, not total S1 count. The country matrix's
+    transpose is computed once per country (not once per chunk)."""
     results = []
     for country, group in s1_batch_df.groupby("country_norm"):
         entry = structures["tfidf_by_country"].get(country)
@@ -599,24 +645,40 @@ def retrieve_name_char_candidates_batch(s1_batch_df, structures):
         if queries_df.empty:
             continue
         query_ids = queries_df["entity_id"].tolist()
-        query_vectors = vec.transform(queries_df["name_char_text"].tolist())
+        query_texts = queries_df["name_char_text"].tolist()
 
         # sp_matmul_topn wants both operands as sparse matrices with
         # matching inner dimension -- matrix is (n_candidates, n_features),
         # so transpose it to (n_features, n_candidates) for the multiply.
-        sim_matrix = sp_matmul_topn(
-            query_vectors, matrix.T, top_n=NAME_CHAR_TOP_K,
-            threshold=NAME_CHAR_MIN_SIMILARITY, n_threads=-1,
-        )
-        sim_matrix = sim_matrix.tocsr()
+        # Computed once per country, reused across all query chunks below.
+        matrix_t = matrix.T.tocsr()
 
-        for row_idx, s1_id in enumerate(query_ids):
-            row = sim_matrix.getrow(row_idx)
-            for col_idx, score in zip(row.indices, row.data):
-                results.append({
-                    "s1_entity_id": s1_id, "candidate_entity_id": entity_ids[col_idx],
-                    "block_method": "name_char_tfidf", "block_score": float(score),
-                })
+        n_queries = len(query_texts)
+        chunk_size = NAME_CHAR_QUERY_CHUNK_SIZE
+        n_chunks = -(-n_queries // chunk_size)
+        log(f"    name_char_tfidf/{country}: {n_queries:,} queries x {matrix.shape[0]:,} "
+            f"candidates, {n_chunks} chunk(s) of <={chunk_size}")
+
+        for chunk_i in range(n_chunks):
+            start = chunk_i * chunk_size
+            end = min(start + chunk_size, n_queries)
+            chunk_ids = query_ids[start:end]
+            query_vectors = vec.transform(query_texts[start:end])
+
+            sim_matrix = sp_matmul_topn(
+                query_vectors, matrix_t, top_n=NAME_CHAR_TOP_K,
+                threshold=NAME_CHAR_MIN_SIMILARITY, n_threads=-1,
+            )
+            sim_matrix = sim_matrix.tocsr()
+
+            for row_idx, s1_id in enumerate(chunk_ids):
+                row = sim_matrix.getrow(row_idx)
+                for col_idx, score in zip(row.indices, row.data):
+                    results.append({
+                        "s1_entity_id": s1_id, "candidate_entity_id": entity_ids[col_idx],
+                        "block_method": "name_char_tfidf", "block_score": float(score),
+                    })
+            del sim_matrix, query_vectors
     return results
 
 
