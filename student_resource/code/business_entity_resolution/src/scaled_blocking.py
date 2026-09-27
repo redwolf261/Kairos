@@ -10,7 +10,7 @@ combination rules (extracted directly from its executable cells, not the
 stale/incorrect parameter manifest in its final "save artifacts" cell --
 see the NOTE below), with ONE deliberate deviation:
 
-  DEVIATION: the notebook fits ONE TfidfVectorizer over ALL S2+S3 records
+  DEVIATION 1: the notebook fits ONE TfidfVectorizer over ALL S2+S3 records
   with no country pre-filter (country filtering happens only at query
   time via an index lookup into the single fitted matrix). At full scale
   that means fitting one vectorizer's vocabulary over ~10M records'
@@ -24,6 +24,20 @@ see the NOTE below), with ONE deliberate deviation:
   similarity within a country), and the country-restriction the notebook
   already enforces at query time means this shouldn't meaningfully change
   which candidates are found -- just makes memory bounded per shard.
+
+  DEVIATION 2: the notebook's min_df=1 (keep every char n-gram, even ones
+  appearing in only one document) is harmless at its original ~20k-row
+  test scale but at millions of rows per country shard produces a
+  vocabulary of many millions of once-off n-grams (typos, transliteration
+  noise, numeric fragments) -- this was measured to push a single
+  country's TF-IDF fit past several GB and was the actual cause of a real
+  OOM crash at full scale (worse than the pool-prep step, which was fixed
+  separately and verified safe on its own). Once a country shard reaches
+  NAME_CHAR_MIN_DF_SCALE_THRESHOLD rows, min_df is raised to
+  NAME_CHAR_MIN_DF_AT_SCALE (default 3) -- an n-gram unique to one name
+  can never help find a SIMILAR pair, so this should not meaningfully
+  reduce recall, only vocabulary bloat. A NAME_CHAR_MAX_FEATURES hard cap
+  (default 500,000) is a backstop on top of that.
 
 Everything else -- normalization, all 4 blockers' exact parameters
 (NAME_CHAR_MIN_SIMILARITY=0.35, NAME_FUZZY_THRESHOLD=0.55,
@@ -84,6 +98,19 @@ N_S1 = int(os.environ.get("BLOCKING_N_S1", "100000"))
 SEED = int(os.environ.get("BLOCKING_SEED", "42"))
 LOG_EVERY = int(os.environ.get("BLOCKING_LOG_EVERY", "1000"))
 
+# TESTING KNOB, not in the original design: caps the candidate pool itself.
+# load_candidate_pool() filters only by country, and this dataset has just
+# 2 countries (US ~1.32M S1 rows, India ~0.88M), so ANY non-empty S1 sample
+# touching a country pulls in that country's ENTIRE pool (~10.3M rows
+# total) -- lowering BLOCKING_N_S1 alone never shrinks the actual memory-
+# heavy step. This was the real root cause behind every OOM near-miss so
+# far, not any individual per-step bug. Set this to run the full pipeline
+# end-to-end on a small, cheap pool first, then raise it in real steps
+# (e.g. 50_000 -> 500_000 -> 2_000_000 -> unset/full) while watching memory
+# at each step, instead of always hitting the full ~10.3M-row pool.
+POOL_ROW_CAP = os.environ.get("BLOCKING_POOL_ROW_CAP")
+POOL_ROW_CAP = int(POOL_ROW_CAP) if POOL_ROW_CAP else None
+
 OUT_DIR = os.path.join(PIPELINE_OUTPUT_DIR, "scaled_blocking")
 
 # ---------------------------------------------------------------------------
@@ -99,6 +126,24 @@ ADDRESS_TOP_K = 30
 ADDRESS_OVERLAP_THRESHOLD = 2
 NAME_CHAR_NGRAM_RANGE = (2, 5)
 NAME_CHAR_MIN_DF = 1
+# NOT in the original notebook -- a second, EXPLICIT scale deviation (the
+# module docstring already documents the per-country-shard TF-IDF one).
+# min_df=1 above is a faithful port of the notebook's parameter, harmless
+# at its original ~20k-row test scale, but at millions of rows per country
+# it means the vocabulary keeps every char 2-5-gram appearing in even a
+# SINGLE business name -- millions of once-off n-grams (typos, rare
+# transliterations, numeric fragments) that contribute essentially nothing
+# to similarity matching (an n-gram shared by exactly one name can never
+# help find a SIMILAR pair) but cost real memory as vocabulary dict
+# entries. This floor only applies once a country shard is large enough
+# for it to matter; small shards still get the notebook's literal min_df=1.
+NAME_CHAR_MIN_DF_AT_SCALE = int(os.environ.get("BLOCKING_NAME_CHAR_MIN_DF_AT_SCALE", "3"))
+NAME_CHAR_MIN_DF_SCALE_THRESHOLD = int(os.environ.get("BLOCKING_NAME_CHAR_MIN_DF_SCALE_THRESHOLD", "200000"))
+# Hard ceiling on vocabulary size regardless of corpus size -- a backstop,
+# not the primary fix (min_df above should already keep this well under
+# the cap for this dataset's actual name text).
+NAME_CHAR_MAX_FEATURES = os.environ.get("BLOCKING_NAME_CHAR_MAX_FEATURES")
+NAME_CHAR_MAX_FEATURES = int(NAME_CHAR_MAX_FEATURES) if NAME_CHAR_MAX_FEATURES else 500_000
 NAME_CHAR_MIN_SIMILARITY = 0.35
 NAME_FUZZY_THRESHOLD = 0.55
 MIN_TOKEN_LENGTH = 3  # address tokens
@@ -256,6 +301,24 @@ def load_candidate_pool(countries_needed):
     pool = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(
         columns=["entity_id", "business_name", "business_address", "country", "source"])
     log(f"  loaded {len(pool):,} candidate records in {round(time.time()-t0,1)}s")
+
+    if POOL_ROW_CAP is not None and len(pool) > POOL_ROW_CAP:
+        # Stratified sample by country (not a plain head()/truncate) so a
+        # small test pool still has both countries represented in roughly
+        # their real proportions, rather than being biased toward whichever
+        # source/country happened to be scanned first. Sampled per-group
+        # and concatenated explicitly (not groupby(...).apply(...), whose
+        # column-retention behavior around the grouping key varies across
+        # pandas versions -- concat of explicit .sample() calls is
+        # unambiguous).
+        frac = POOL_ROW_CAP / len(pool)
+        sampled_parts = [
+            group.sample(n=max(1, round(len(group) * frac)), random_state=SEED)
+            for _, group in pool.groupby("country")
+        ]
+        pool = pd.concat(sampled_parts, ignore_index=True)
+        log(f"  BLOCKING_POOL_ROW_CAP={POOL_ROW_CAP:,} set -- downsampled to "
+            f"{len(pool):,} rows (stratified by country) for testing")
     return pool
 
 
@@ -366,7 +429,16 @@ def _drop_oversized_buckets(index, max_bucket_size, index_name):
 def build_structures(pool_df, max_bucket_size=None):
     pool_df = prepare_pool_fields_parallel(pool_df)
 
-    source_lookup = pool_df.set_index("entity_id").to_dict("index")
+    # MEMORY FIX (post-OOM-crash #2): the original `pool_df.set_index(...)
+    # .to_dict("index")` materialized ALL 9 columns (raw name/address text,
+    # every derived token list, char text, etc.) as boxed Python objects,
+    # once per candidate row (10.3M rows) -- several GB heavier than the
+    # same data sitting in pandas/pyarrow columnar storage, for data the
+    # two call sites (retrieve_address_candidates, retrieve_name_token_
+    # candidates) never actually read beyond country_norm. Only country_norm
+    # is needed at lookup time, so only that column is kept -- and as a
+    # plain dict[str,str], not full row dicts.
+    source_lookup = dict(zip(pool_df["entity_id"], pool_df["country_norm"]))
     max_bucket_size = max_bucket_size or MAX_INDEX_BUCKET_SIZE
 
     log("Building address inverted index...")
@@ -408,12 +480,16 @@ def build_structures(pool_df, max_bucket_size=None):
         if not country:
             continue
         texts = group["name_char_text"].fillna("").astype(str).tolist()
+        min_df = NAME_CHAR_MIN_DF_AT_SCALE if len(texts) >= NAME_CHAR_MIN_DF_SCALE_THRESHOLD else NAME_CHAR_MIN_DF
         vec = TfidfVectorizer(
             analyzer="char", ngram_range=NAME_CHAR_NGRAM_RANGE,
-            min_df=NAME_CHAR_MIN_DF, lowercase=False,
+            min_df=min_df, max_features=NAME_CHAR_MAX_FEATURES, lowercase=False,
         )
         matrix = vec.fit_transform(texts)
+        del texts
         tfidf_by_country[country] = (vec, matrix, group["entity_id"].to_numpy())
+        log(f"  {country}: {len(group):,} names -> vocabulary size "
+            f"{len(vec.vocabulary_):,} (min_df={min_df})")
     log(f"  fitted {len(tfidf_by_country)} country-shard TF-IDF vectorizers")
 
     return {
@@ -445,8 +521,8 @@ def retrieve_address_candidates(s1_row, structures):
     for entity_id, overlap in counts.most_common():
         if len(ranked) >= ADDRESS_TOP_K:
             break
-        candidate = structures["source_lookup"][entity_id]
-        if candidate["country_norm"] != country:
+        candidate_country = structures["source_lookup"][entity_id]
+        if candidate_country != country:
             continue
         if overlap < ADDRESS_OVERLAP_THRESHOLD:
             continue
@@ -476,8 +552,8 @@ def retrieve_name_token_candidates(s1_row, structures):
     for entity_id, overlap in counts.most_common():
         if len(ranked) >= NAME_TOKEN_TOP_K:
             break
-        candidate = structures["source_lookup"][entity_id]
-        if candidate["country_norm"] != country:
+        candidate_country = structures["source_lookup"][entity_id]
+        if candidate_country != country:
             continue
         ranked.append({"s1_entity_id": s1_id, "candidate_entity_id": entity_id,
                         "block_method": "name_token", "block_score": float(overlap)})
@@ -724,7 +800,16 @@ def main():
     countries_needed = set(s1_sample["country"].unique())
 
     pool_df = load_candidate_pool(countries_needed)
+    candidate_pool_size = len(pool_df)
     structures = build_structures(pool_df)
+    # MEMORY FIX (post-OOM-crash #2): main() previously held `pool_df` (the
+    # full prepared 10.3M-row DataFrame, all derived columns included) live
+    # for the entire rest of the run just to read len(pool_df) at the end,
+    # even though build_structures() already extracted everything the
+    # blocker loop needs into `structures`. That's ~10.3M rows of dead
+    # weight sitting in memory throughout the address/name_token/TF-IDF/
+    # fuzzy blocking loop below. Drop it now that its size is captured.
+    del pool_df
 
     candidate_pairs, provenance, per_method_counts = run_blocking(s1_sample, structures)
 
@@ -751,7 +836,7 @@ def main():
         "n_s1_sampled": len(s1_sample),
         "seed": SEED,
         "countries": sorted(countries_needed),
-        "candidate_pool_size": len(pool_df),
+        "candidate_pool_size": candidate_pool_size,
         "n_candidate_pairs": len(candidate_pairs),
         "avg_candidates_per_s1": round(len(candidate_pairs) / len(s1_sample), 2),
         "per_method_raw_row_counts": per_method_counts,
